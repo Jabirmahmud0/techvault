@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { authService } from "./auth.service.js";
+import { emailService } from "../email/email.service.js";
 
 /**
  * Auth controller — thin layer that parses requests and delegates to the service.
@@ -26,6 +27,9 @@ export const authController = {
                     accessToken: result.accessToken,
                 },
             });
+
+            // Send welcome email (async, don't await/block response)
+            emailService.sendWelcomeEmail(req.body.email, req.body.name).catch(console.error);
         } catch (error) {
             next(error);
         }

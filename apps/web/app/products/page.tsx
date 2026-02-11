@@ -8,21 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
 import { cn } from "@/lib/utils";
 
-/** Static product data (will be replaced with API call in production) */
-const allProducts = [
-    { id: "1", name: "iPhone 15 Pro Max", slug: "iphone-15-pro-max", price: 1199.99, compareAtPrice: 1299.99, image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&h=600&fit=crop", rating: 4.8, reviewCount: 243, brand: "Apple", category: "smartphones", isFeatured: true },
-    { id: "2", name: "MacBook Pro 16\" M3", slug: "macbook-pro-16-m3", price: 2499.99, compareAtPrice: null, image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=600&fit=crop", rating: 4.9, reviewCount: 187, brand: "Apple", category: "laptops", isFeatured: true },
-    { id: "3", name: "Samsung Galaxy S24 Ultra", slug: "samsung-galaxy-s24-ultra", price: 1299.99, compareAtPrice: 1419.99, image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&h=600&fit=crop", rating: 4.7, reviewCount: 156, brand: "Samsung", category: "smartphones", isFeatured: true },
-    { id: "4", name: "Sony WH-1000XM5", slug: "sony-wh-1000xm5", price: 349.99, compareAtPrice: 399.99, image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&h=600&fit=crop", rating: 4.6, reviewCount: 412, brand: "Sony", category: "headphones", isFeatured: true },
-    { id: "5", name: "iPad Pro 12.9\" M2", slug: "ipad-pro-12-9-m2", price: 1099.99, compareAtPrice: null, image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=600&fit=crop", rating: 4.8, reviewCount: 98, brand: "Apple", category: "tablets", isFeatured: true },
-    { id: "6", name: "Canon EOS R6 Mark II", slug: "canon-eos-r6-mark-ii", price: 2499.99, compareAtPrice: null, image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=600&fit=crop", rating: 4.9, reviewCount: 67, brand: "Canon", category: "cameras", isFeatured: true },
-    { id: "7", name: "Apple Watch Ultra 2", slug: "apple-watch-ultra-2", price: 799.99, compareAtPrice: 899.99, image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600&h=600&fit=crop", rating: 4.7, reviewCount: 134, brand: "Apple", category: "smartwatches", isFeatured: true },
-    { id: "8", name: "Dell XPS 15 OLED", slug: "dell-xps-15-oled", price: 1799.99, compareAtPrice: null, image: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&h=600&fit=crop", rating: 4.5, reviewCount: 89, brand: "Dell", category: "laptops", isFeatured: false },
-    { id: "9", name: "Google Pixel 8 Pro", slug: "google-pixel-8-pro", price: 999.99, compareAtPrice: 1099.99, image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&h=600&fit=crop", rating: 4.6, reviewCount: 178, brand: "Google", category: "smartphones", isFeatured: false },
-    { id: "10", name: "Samsung Galaxy Tab S9+", slug: "samsung-galaxy-tab-s9-plus", price: 999.99, compareAtPrice: null, image: "https://images.unsplash.com/photo-1561154464-82e9aeb32fa0?w=600&h=600&fit=crop", rating: 4.5, reviewCount: 52, brand: "Samsung", category: "tablets", isFeatured: false },
-    { id: "11", name: "Sony A7 IV", slug: "sony-a7-iv", price: 2498.00, compareAtPrice: null, image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&h=600&fit=crop", rating: 4.8, reviewCount: 122, brand: "Sony", category: "cameras", isFeatured: false },
-    { id: "12", name: "Samsung Galaxy Watch 6", slug: "samsung-galaxy-watch-6", price: 329.99, compareAtPrice: 399.99, image: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&h=600&fit=crop", rating: 4.4, reviewCount: 201, brand: "Samsung", category: "smartwatches", isFeatured: false },
-];
+import { useProducts } from "@/lib/hooks/use-products";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const sortOptions = [
     { value: "newest", label: "Newest" },
@@ -49,29 +36,12 @@ function ProductsContent() {
     const [sort, setSort] = useState("newest");
     const [view, setView] = useState<"grid" | "list">("grid");
 
-    const filteredProducts = useMemo(() => {
-        let products = [...allProducts];
+    const { data, isLoading } = useProducts({
+        category: selectedCategory,
+        sort,
+    });
 
-        if (selectedCategory) {
-            products = products.filter((p) => p.category === selectedCategory);
-        }
-
-        switch (sort) {
-            case "price_asc":
-                products.sort((a, b) => a.price - b.price);
-                break;
-            case "price_desc":
-                products.sort((a, b) => b.price - a.price);
-                break;
-            case "rating":
-                products.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                break;
-            default:
-                break;
-        }
-
-        return products;
-    }, [selectedCategory, sort]);
+    const products = data?.data || [];
 
     return (
         <div className="min-h-screen py-8 px-4">
@@ -88,7 +58,7 @@ function ProductsContent() {
                             : "All Products"}
                     </h1>
                     <p className="mt-2 text-muted-foreground">
-                        {filteredProducts.length} products found
+                        {products.length} products found
                     </p>
                 </motion.div>
 
@@ -148,29 +118,48 @@ function ProductsContent() {
                 </div>
 
                 {/* Product Grid */}
-                <motion.div
-                    layout
-                    className={cn(
+                {isLoading ? (
+                    <div className={cn(
                         "grid gap-6",
                         view === "grid"
                             ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                             : "grid-cols-1"
-                    )}
-                >
-                    {filteredProducts.map((product, index) => (
-                        <motion.div
-                            key={product.id}
-                            layout
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
-                            <ProductCard {...product} />
-                        </motion.div>
-                    ))}
-                </motion.div>
+                    )}>
+                        {[...Array(8)].map((_, i) => (
+                            <div key={i} className="flex flex-col space-y-3">
+                                <Skeleton className="h-[300px] w-full rounded-xl" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-[250px]" />
+                                    <Skeleton className="h-4 w-[200px]" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <motion.div
+                        layout
+                        className={cn(
+                            "grid gap-6",
+                            view === "grid"
+                                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                : "grid-cols-1"
+                        )}
+                    >
+                        {products.map((product, index) => (
+                            <motion.div
+                                key={product.id}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                            >
+                                <ProductCard {...product} />
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
 
-                {filteredProducts.length === 0 && (
+                {!isLoading && products.length === 0 && (
                     <div className="text-center py-20">
                         <SlidersHorizontal className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
                         <p className="text-muted-foreground text-lg">No products match your filters</p>

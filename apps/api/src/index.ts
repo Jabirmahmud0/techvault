@@ -11,6 +11,9 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import productsRoutes from "./modules/products/products.routes.js";
 import categoriesRoutes from "./modules/categories/categories.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
+import checkoutRoutes from "./modules/checkout/checkout.routes.js";
+import ordersRoutes from "./modules/orders/orders.routes.js";
+import uploadRoutes from "./modules/upload/upload.routes.js";
 
 const app = express();
 
@@ -71,6 +74,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // ── 404 Handler ──────────────────────────────────────────────────────────
 

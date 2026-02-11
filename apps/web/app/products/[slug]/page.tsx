@@ -17,50 +17,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
+import { useProduct } from "@/lib/hooks/use-products";
 import { cn } from "@/lib/utils";
 
-/** Static product lookup (will be replaced with API/DB call) */
-const productsMap: Record<string, {
-    id: string; name: string; slug: string; price: number; compareAtPrice?: number;
-    images: string[]; description: string; specs: Record<string, string>;
-    rating: number; reviewCount: number; brand: string; category: string;
-    stock: number; isFeatured: boolean;
-}> = {
-    "iphone-15-pro-max": {
-        id: "1", name: "iPhone 15 Pro Max", slug: "iphone-15-pro-max", price: 1199.99,
-        compareAtPrice: 1299.99,
-        images: [
-            "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800&h=800&fit=crop",
-        ],
-        description: "The iPhone 15 Pro Max features a stunning 6.7-inch Super Retina XDR display, A17 Pro chip, 48MP camera system with 5x optical zoom, and titanium design. Experience the most powerful iPhone ever made.",
-        specs: { Display: "6.7\" OLED", Chip: "A17 Pro", Storage: "256GB", Camera: "48MP + 12MP + 12MP", Battery: "4422 mAh", OS: "iOS 17" },
-        rating: 4.8, reviewCount: 243, brand: "Apple", category: "Smartphones", stock: 15, isFeatured: true,
-    },
-    "macbook-pro-16-m3": {
-        id: "2", name: "MacBook Pro 16\" M3 Max", slug: "macbook-pro-16-m3", price: 2499.99,
-        images: [
-            "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=800&h=800&fit=crop",
-        ],
-        description: "The MacBook Pro 16-inch with M3 Max delivers extraordinary performance for pro workflows. With up to 128GB unified memory and a stunning Liquid Retina XDR display.",
-        specs: { Display: "16.2\" Liquid Retina XDR", Chip: "M3 Max", RAM: "36GB", Storage: "1TB SSD", Battery: "22h", Weight: "2.14 kg" },
-        rating: 4.9, reviewCount: 187, brand: "Apple", category: "Laptops", stock: 8, isFeatured: true,
-    },
-    "samsung-galaxy-s24-ultra": {
-        id: "3", name: "Samsung Galaxy S24 Ultra", slug: "samsung-galaxy-s24-ultra", price: 1299.99,
-        compareAtPrice: 1419.99,
-        images: [
-            "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=800&h=800&fit=crop",
-        ],
-        description: "Galaxy S24 Ultra with Galaxy AI. The ultimate smartphone experience with a 200MP camera, S Pen, titanium frame, and powerful Snapdragon 8 Gen 3 processor.",
-        specs: { Display: "6.8\" Dynamic AMOLED 2X", Chip: "Snapdragon 8 Gen 3", Storage: "256GB", Camera: "200MP + 12MP + 50MP + 10MP", Battery: "5000 mAh", OS: "Android 14" },
-        rating: 4.7, reviewCount: 156, brand: "Samsung", category: "Smartphones", stock: 22, isFeatured: true,
-    },
-};
+
 
 export default function ProductDetailPage({
     params,
@@ -68,12 +31,33 @@ export default function ProductDetailPage({
     params: Promise<{ slug: string }>;
 }) {
     const resolvedParams = use(params);
-    const product = productsMap[resolvedParams.slug];
+    const { data: product, isLoading, error } = useProduct(resolvedParams.slug);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const { addItem } = useCartStore();
+    const { toggleItem, isInWishlist } = useWishlistStore();
+    const wishlisted = product ? isInWishlist(product.id) : false;
 
-    if (!product) {
+    if (isLoading) {
+        return (
+            <div className="min-h-screen py-8 px-4">
+                <div className="mx-auto max-w-7xl">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <Skeleton className="aspect-square rounded-2xl" />
+                        <div className="space-y-6">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-10 w-3/4" />
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-8 w-40" />
+                            <Skeleton className="h-32 w-full" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!product || error) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
@@ -235,8 +219,22 @@ export default function ProductDetailPage({
                                 Add to Cart
                             </Button>
 
-                            <Button variant="outline" size="icon" className="h-12 w-12" aria-label="Add to wishlist">
-                                <Heart className="h-5 w-5" />
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className={cn("h-12 w-12", wishlisted && "border-red-500/50 bg-red-500/10")}
+                                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                                onClick={() =>
+                                    toggleItem({
+                                        id: product.id,
+                                        name: product.name,
+                                        slug: product.slug,
+                                        price: product.price,
+                                        image: product.images[0]!,
+                                    })
+                                }
+                            >
+                                <Heart className={cn("h-5 w-5", wishlisted && "fill-red-500 text-red-500")} />
                             </Button>
                         </div>
 

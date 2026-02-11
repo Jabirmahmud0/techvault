@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Zap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 const passwordRequirements = [
@@ -22,12 +25,29 @@ export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const router = useRouter();
+    const setAuth = useAuthStore((s) => s.setAuth);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // TODO: connect to auth API
-        setTimeout(() => setLoading(false), 1500);
+        setError("");
+
+        try {
+            const res = await api.post<{ data: { user: any; accessToken: string } }>("/auth/register", {
+                name,
+                email,
+                password,
+            });
+
+            setAuth(res.data.user, res.data.accessToken);
+            router.push("/");
+        } catch (err: any) {
+            setError(err.message || "Failed to create account");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -58,6 +78,12 @@ export default function RegisterPage() {
                     <p className="text-center text-muted-foreground text-sm mb-8">
                         Join TechVault and start shopping premium tech
                     </p>
+
+                    {error && (
+                        <div className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Name */}

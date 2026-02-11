@@ -250,31 +250,19 @@ export const wishlistsRelations = relations(wishlists, ({ one }) => ({
 
 // ── Orders ─────────────────────────────────────────────────────────────────
 
-export const orders = pgTable(
-    "orders",
-    {
-        id: uuid("id").primaryKey().defaultRandom(),
-        userId: uuid("user_id")
-            .references(() => users.id, { onDelete: "cascade" })
-            .notNull(),
-        stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
-        status: orderStatusEnum("status").default("PENDING").notNull(),
-        total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-        subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-        tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
-        shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0"),
-        shippingAddressId: uuid("shipping_address_id"),
-        couponId: uuid("coupon_id"),
-        notes: text("notes"),
-        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-    },
-    (table) => [
-        index("orders_user_idx").on(table.userId),
-        index("orders_status_idx").on(table.status),
-        index("orders_created_at_idx").on(table.createdAt),
-    ]
-);
+export const orders = pgTable("orders", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
+    stripeSessionId: text("stripe_session_id").unique(),
+    total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+    status: text("status", { enum: ["PENDING", "PAID", "FAILED"] })
+        .default("PENDING")
+        .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
     user: one(users, {
@@ -282,14 +270,6 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
         references: [users.id],
     }),
     items: many(orderItems),
-    shippingAddress: one(addresses, {
-        fields: [orders.shippingAddressId],
-        references: [addresses.id],
-    }),
-    coupon: one(coupons, {
-        fields: [orders.couponId],
-        references: [coupons.id],
-    }),
 }));
 
 // ── Order Items ────────────────────────────────────────────────────────────
@@ -297,15 +277,15 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
 export const orderItems = pgTable("order_items", {
     id: uuid("id").primaryKey().defaultRandom(),
     orderId: uuid("order_id")
-        .references(() => orders.id, { onDelete: "cascade" })
-        .notNull(),
+        .notNull()
+        .references(() => orders.id, { onDelete: "cascade" }),
     productId: uuid("product_id")
-        .references(() => products.id, { onDelete: "set null" }),
-    productName: varchar("product_name", { length: 500 }).notNull(),
+        .notNull()
+        .references(() => products.id),
+    productName: text("product_name").notNull(),
     productImage: text("product_image"),
     quantity: integer("quantity").notNull(),
-    priceAtPurchase: decimal("price_at_purchase", { precision: 10, scale: 2 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull(),
 });
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -318,6 +298,10 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
         references: [products.id],
     }),
 }));
+
+// ── Orders ─────────────────────────────────────────────────────────────────
+
+
 
 // ── Coupons ────────────────────────────────────────────────────────────────
 

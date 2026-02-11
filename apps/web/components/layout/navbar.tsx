@@ -11,12 +11,26 @@ import {
     Menu,
     X,
     Zap,
+    LogOut,
+    Settings,
+    Package,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { SearchModal } from "@/components/search/search-modal";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -34,7 +48,13 @@ export function Navbar() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const { toggleCart, totalItems } = useCartStore();
+    const { user, isAuthenticated, logout } = useAuthStore();
+    const wishlistCount = useWishlistStore((s) => s.items.length);
     const itemCount = totalItems();
+
+    const handleLogout = async () => {
+        await api.logout();
+    };
 
     useEffect(() => setMounted(true), []);
 
@@ -86,11 +106,20 @@ export function Navbar() {
                             <Search className="h-5 w-5" />
                         </Button>
 
-                        <Button variant="ghost" size="icon" aria-label="Wishlist" id="nav-wishlist" asChild>
-                            <Link href="/wishlist">
+                        <Link href="/wishlist" className="relative" id="nav-wishlist">
+                            <Button variant="ghost" size="icon" aria-label="Wishlist">
                                 <Heart className="h-5 w-5" />
-                            </Link>
-                        </Button>
+                            </Button>
+                            {mounted && wishlistCount > 0 && (
+                                <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white"
+                                >
+                                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                                </motion.span>
+                            )}
+                        </Link>
 
                         {/* Cart Button with Badge */}
                         <Button
@@ -115,17 +144,59 @@ export function Navbar() {
 
                         <ThemeToggle />
 
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Account"
-                            id="nav-account"
-                            asChild
-                        >
-                            <Link href="/login">
-                                <User className="h-5 w-5" />
-                            </Link>
-                        </Button>
+                        {mounted && isAuthenticated && user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label="Account"
+                                        id="nav-account-menu"
+                                    >
+                                        <User className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>Profile</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/orders" className="cursor-pointer">
+                                            <Package className="mr-2 h-4 w-4" />
+                                            <span>My Orders</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Log out</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Login"
+                                id="nav-login"
+                                asChild
+                            >
+                                <Link href="/login">
+                                    <User className="h-5 w-5" />
+                                </Link>
+                            </Button>
+                        )}
 
                         {/* Mobile Menu Toggle */}
                         <Button

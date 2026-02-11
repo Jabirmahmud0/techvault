@@ -14,6 +14,8 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 /**
  * Checkout page with order summary and shipping/payment form.
@@ -22,16 +24,41 @@ export default function CheckoutPage() {
     const { items, totalPrice } = useCartStore();
     const [loading, setLoading] = useState(false);
 
+    const router = useRouter();
+
     const subtotal = totalPrice();
     const shipping = subtotal > 50 ? 0 : 9.99;
     const tax = subtotal * 0.08;
     const total = subtotal + shipping + tax;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // TODO: integrate Stripe Checkout
-        setTimeout(() => setLoading(false), 2000);
+
+        try {
+            const res = await api.post<{ data: { url: string } }>("/checkout", {
+                items: items.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity
+                }))
+            });
+
+            if (res.data?.url) {
+                // Determine if we should redirect externally (Stripe) or internally (Mock)
+                // For this implementation, we treat all URLs as destinations
+                const url = res.data.url;
+                if (url.startsWith("http")) {
+                    window.location.href = url;
+                } else {
+                    router.push(url);
+                }
+            }
+        } catch (error) {
+            console.error("Checkout validation failed", error);
+            // TODO: simple toast notification
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (items.length === 0) {

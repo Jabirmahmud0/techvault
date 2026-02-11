@@ -1,82 +1,61 @@
-import { eq, ilike, and, gte, lte, desc, asc, sql, count } from "drizzle-orm";
-import { products, productImages, categories } from "@repo/db/schema";
-import { db } from "../../config/database.js";
+import type { ProductQuery } from "@repo/types";
+import { products } from "./products.data.js";
 import { ApiError } from "../../middleware/index.js";
-import type { ProductQuery, CreateProductInput, UpdateProductInput } from "@repo/types";
 
 export const productsService = {
     /**
-     * List products with filtering, sorting, and pagination.
+     * List products with filtering, sorting, and pagination (Mock Data).
      */
     async list(query: ProductQuery) {
-        const { page, limit, category, search, minPrice, maxPrice, sort, brand, featured } = query;
-        const offset = (page - 1) * limit;
+        let data = [...products];
+        const { page = 1, limit = 10, category, search, minPrice, maxPrice, sort, brand, featured } = query;
 
-        // Build dynamic where conditions
-        const conditions = [eq(products.isArchived, false)];
-
+        // Filter
         if (search) {
-            conditions.push(ilike(products.name, `%${search}%`));
+            const q = search.toLowerCase();
+            data = data.filter((p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
+        }
+        if (category) {
+            data = data.filter((p) => p.category === category);
         }
         if (brand) {
-            conditions.push(eq(products.brand, brand));
+            data = data.filter((p) => p.brand === brand);
         }
         if (featured !== undefined) {
-            conditions.push(eq(products.isFeatured, featured));
+            // @ts-expect-error - mock data types mismatch with strict DB types but it's fine for mock
+            data = data.filter((p) => p.isFeatured === (String(featured) === "true"));
         }
         if (minPrice !== undefined) {
-            conditions.push(gte(products.price, String(minPrice)));
+            data = data.filter((p) => p.price >= Number(minPrice));
         }
         if (maxPrice !== undefined) {
-            conditions.push(lte(products.price, String(maxPrice)));
+            data = data.filter((p) => p.price <= Number(maxPrice));
         }
 
-        // Category filter by slug
-        let categoryId: string | undefined;
-        if (category) {
-            const cat = await db.query.categories.findFirst({
-                where: eq(categories.slug, category),
-            });
-            if (cat) {
-                categoryId = cat.id;
-                conditions.push(eq(products.categoryId, categoryId));
-            }
+        // Sort
+        switch (sort) {
+            case "price_asc":
+                data.sort((a, b) => a.price - b.price);
+                break;
+            case "price_desc":
+                data.sort((a, b) => b.price - a.price);
+                break;
+            case "rating":
+                data.sort((a, b) => b.rating - a.rating);
+                break;
+            case "newest":
+            default:
+                // mock data doesn't have createdAt, so just keep order
+                break;
         }
 
-        const whereClause = and(...conditions);
-
-        // Sort order
-        const orderBy = (() => {
-            switch (sort) {
-                case "price_asc": return asc(products.price);
-                case "price_desc": return desc(products.price);
-                case "rating": return desc(products.rating);
-                case "name": return asc(products.name);
-                case "newest":
-                default: return desc(products.createdAt);
-            }
-        })();
-
-        // Parallel: fetch data + count
-        const [data, totalResult] = await Promise.all([
-            db.query.products.findMany({
-                where: whereClause,
-                orderBy: [orderBy],
-                limit,
-                offset,
-                with: {
-                    images: true,
-                    category: true,
-                },
-            }),
-            db.select({ count: count() }).from(products).where(whereClause),
-        ]);
-
-        const total = totalResult[0]?.count ?? 0;
+        const total = data.length;
         const totalPages = Math.ceil(total / limit);
+        const offset = (page - 1) * limit;
+        const paginatedData = data.slice(offset, offset + limit);
 
         return {
-            data,
+            data: paginatedData,
             pagination: {
                 page,
                 limit,
@@ -89,21 +68,10 @@ export const productsService = {
     },
 
     /**
-     * Get a single product by slug, including images, category, and reviews.
+     * Get a single product by slug (Mock Data).
      */
     async getBySlug(slug: string) {
-        const product = await db.query.products.findFirst({
-            where: eq(products.slug, slug),
-            with: {
-                images: true,
-                category: true,
-                reviews: {
-                    with: { user: true },
-                    orderBy: [desc(sql`created_at`)],
-                    limit: 10,
-                },
-            },
-        });
+        const product = products.find((p) => p.slug === slug);
 
         if (!product) {
             throw ApiError.notFound("Product not found");
@@ -112,76 +80,13 @@ export const productsService = {
         return product;
     },
 
-    /**
-     * Create a new product (admin/seller only).
-     */
-    async create(input: CreateProductInput, sellerId: string) {
-        // Check for duplicate slug
-        const existing = await db.query.products.findFirst({
-            where: eq(products.slug, input.slug),
-        });
-        if (existing) {
-            throw ApiError.conflict("A product with this slug already exists");
-        }
-
-        const [product] = await db
-            .insert(products)
-            .values({
-                ...input,
-                price: String(input.price),
-                compareAtPrice: input.compareAtPrice ? String(input.compareAtPrice) : undefined,
-                sellerId,
-            })
-            .returning();
-
-        return product;
-    },
-
-    /**
-     * Update a product by ID (admin/seller only).
-     */
-    async update(id: string, input: UpdateProductInput) {
-        const existing = await db.query.products.findFirst({
-            where: eq(products.id, id),
-        });
-        if (!existing) {
-            throw ApiError.notFound("Product not found");
-        }
-
-        const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
-        if (input.price !== undefined) updateData.price = String(input.price);
-        if (input.compareAtPrice !== undefined) updateData.compareAtPrice = String(input.compareAtPrice);
-
-        const [updated] = await db
-            .update(products)
-            .set(updateData)
-            .where(eq(products.id, id))
-            .returning();
-
-        return updated;
-    },
-
-    /**
-     * Get all unique brands for filter sidebar.
-     */
+    async create() { throw new Error("Not implemented in mock mode"); },
+    async update() { throw new Error("Not implemented in mock mode"); },
     async getBrands() {
-        const result = await db
-            .selectDistinct({ brand: products.brand })
-            .from(products)
-            .where(and(eq(products.isArchived, false), sql`${products.brand} IS NOT NULL`));
-
-        return result.map((r) => r.brand).filter(Boolean);
+        const brands = new Set(products.map((p) => p.brand));
+        return Array.from(brands);
     },
-
-    /**
-     * Get featured products for the homepage.
-     */
     async getFeatured(limit = 8) {
-        return db.query.products.findMany({
-            where: and(eq(products.isFeatured, true), eq(products.isArchived, false)),
-            with: { images: true, category: true },
-            orderBy: [desc(products.createdAt)],
-            limit,
-        });
+        return products.filter((p) => p.isFeatured).slice(0, limit);
     },
 };

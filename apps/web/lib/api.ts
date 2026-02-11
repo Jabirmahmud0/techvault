@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+import { useAuthStore } from "./stores/auth-store";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 /**
  * Typed fetch wrapper for API calls.
@@ -21,7 +23,7 @@ export async function apiClient<T>(
 
     // Attach access token if available
     if (typeof window !== "undefined") {
-        const token = localStorage.getItem("accessToken");
+        const token = useAuthStore.getState().accessToken;
         if (token) {
             config.headers = {
                 ...config.headers,
@@ -31,6 +33,49 @@ export async function apiClient<T>(
     }
 
     const response = await fetch(url, config);
+
+    // Handle 401 Unauthorized (Token expired)
+    if (response.status === 401) {
+        try {
+            // Try to refresh token
+            const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: "POST",
+                credentials: "include", // send httpOnly cookie
+            });
+
+            if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                const newAccessToken = data.data.accessToken;
+
+                // Update store
+                useAuthStore.getState().setAuth(
+                    // @ts-expect-error - user might be null but we just want to update token
+                    useAuthStore.getState().user,
+                    newAccessToken
+                );
+
+                // Retry original request with new token
+                const newConfig = {
+                    ...config,
+                    headers: {
+                        ...config.headers,
+                        Authorization: `Bearer ${newAccessToken}`,
+                    },
+                };
+                const retryRes = await fetch(url, newConfig);
+                if (retryRes.ok) return retryRes.json();
+            } else {
+                // Refresh failed - logout
+                useAuthStore.getState().logout();
+                window.location.href = "/login";
+                throw new Error("Session expired");
+            }
+        } catch (error) {
+            useAuthStore.getState().logout();
+            window.location.href = "/login";
+            throw error;
+        }
+    }
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ error: "Network error" }));
@@ -58,4 +103,15 @@ export const api = {
 
     delete: <T>(endpoint: string) =>
         apiClient<T>(endpoint, { method: "DELETE" }),
+
+    logout: async () => {
+        try {
+            await apiClient("/auth/logout", { method: "POST" });
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            useAuthStore.getState().logout();
+            window.location.href = "/login";
+        }
+    },
 };

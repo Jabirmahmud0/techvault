@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 /**
  * Login page with glassmorphism card design.
@@ -14,12 +17,28 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const router = useRouter();
+    const setAuth = useAuthStore((s) => s.setAuth);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // TODO: connect to auth API
-        setTimeout(() => setLoading(false), 1500);
+        setError("");
+
+        try {
+            const res = await api.post<{ data: { user: any; accessToken: string } }>("/auth/login", {
+                email,
+                password,
+            });
+
+            setAuth(res.data.user, res.data.accessToken);
+            router.push("/");
+        } catch (err: any) {
+            setError(err.message || "Failed to login");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -51,6 +70,12 @@ export default function LoginPage() {
                         Sign in to your account to continue shopping
                     </p>
 
+                    {error && (
+                        <div className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email */}
                         <div className="space-y-2">
@@ -67,6 +92,7 @@ export default function LoginPage() {
                                     placeholder="you@example.com"
                                     required
                                     className="w-full rounded-xl border border-border bg-background pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    suppressHydrationWarning
                                 />
                             </div>
                         </div>
