@@ -119,3 +119,45 @@ export interface JwtPayload {
     iat?: number;
     exp?: number;
 }
+
+// ── Checkout Schemas ───────────────────────────────────────────────────────
+
+export const shippingAddressSchema = z.object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    address: z.string().min(1, "Address is required"),
+    city: z.string().min(1, "City is required"),
+    zip: z.string().min(1, "ZIP code is required"),
+    country: z.string().default("US"), // Default for now
+});
+
+export const createCheckoutSessionSchema = z.object({
+    items: z.array(z.object({
+        productId: z.string().uuid(),
+        quantity: z.number().int().positive()
+    })).min(1, "Cart cannot be empty"),
+    shippingAddress: shippingAddressSchema,
+});
+
+export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
+export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;
+
+// ── Settings Schemas ───────────────────────────────────────────────────────
+
+export const settingsSchema = z.object({
+    id: z.string().uuid().optional(),
+    storeName: z.string().min(1, "Store name is required"),
+    storeEmail: z.string().email("Invalid email address"),
+    storeUrl: z.string().url().optional().or(z.literal("")),
+    currency: z.string().min(1, "Currency is required"),
+    taxRate: z.coerce.number().min(0),
+    shippingFee: z.coerce.number().min(0),
+    freeShippingThreshold: z.coerce.number().min(0).optional(),
+    lowStockThreshold: z.coerce.number().int().min(0),
+});
+
+export const updateSettingsSchema = settingsSchema.omit({ id: true });
+
+export type Settings = z.infer<typeof settingsSchema>;
+export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

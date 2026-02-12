@@ -1,12 +1,14 @@
+"use client";
+
+import { AdminCustomersTable } from "@/components/admin/customers-table";
+
 export default function AdminCustomersPage() {
     return (
-        <div>
-            <h2 className="text-3xl font-bold tracking-tight font-[family-name:var(--font-heading)] mb-6">
+        <div className="space-y-6">
+            <h2 className="text-3xl font-bold tracking-tight font-[family-name:var(--font-heading)]">
                 Customers
             </h2>
-            <div className="rounded-md border p-4">
-                <p>Customer list will go here.</p>
-            </div>
+            <AdminCustomersTable />
         </div>
     );
 }

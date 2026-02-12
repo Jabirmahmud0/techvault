@@ -14,6 +14,9 @@ router.get("/featured", productsController.featured);
 /** GET /api/products/brands — Get all unique brands */
 router.get("/brands", productsController.brands);
 
+/** GET /api/products/by-id/:id — Get single product by UUID */
+router.get("/by-id/:id", productsController.getById);
+
 /** GET /api/products/:slug — Get single product by slug */
 router.get("/:slug", productsController.getBySlug);
 
@@ -33,6 +36,14 @@ router.put(
     authorize("ADMIN", "SELLER"),
     validate(updateProductSchema),
     productsController.update
+);
+
+/** DELETE /api/products/:id — Delete product (Admin/Seller only) */
+router.delete(
+    "/:id",
+    authenticate,
+    authorize("ADMIN", "SELLER"),
+    productsController.delete
 );
 
 export default router;

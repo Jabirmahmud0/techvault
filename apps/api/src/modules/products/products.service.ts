@@ -247,6 +247,42 @@ export const productsService = {
         return updated;
     },
 
+    /**
+     * Get a single product by its UUID.
+     */
+    async getById(id: string) {
+        const product = await db.query.products.findFirst({
+            where: eq(products.id, id),
+            with: {
+                category: true,
+                images: true,
+            },
+        });
+
+        if (!product) {
+            throw ApiError.notFound("Product not found");
+        }
+
+        return product;
+    },
+
+    /**
+     * Delete a product by ID. Related records cascade-delete via DB schema.
+     */
+    async delete(id: string) {
+        const product = await db.query.products.findFirst({
+            where: eq(products.id, id),
+        });
+
+        if (!product) {
+            throw ApiError.notFound("Product not found");
+        }
+
+        await db.delete(products).where(eq(products.id, id));
+
+        return { deleted: true };
+    },
+
     async getBrands() {
         const brands = await db
             .selectDistinct({ brand: products.brand })

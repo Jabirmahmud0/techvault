@@ -1,6 +1,5 @@
 "use client";
 
-
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -13,6 +12,19 @@ import {
     Truck,
     Shield,
 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { shippingAddressSchema, ShippingAddress } from "@repo/types";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/stores/cart-store";
@@ -25,7 +37,6 @@ import { useRouter } from "next/navigation";
 export default function CheckoutPage() {
     const { items, totalPrice, clearCart } = useCartStore();
     const [loading, setLoading] = useState(false);
-
     const router = useRouter();
 
     const subtotal = totalPrice();
@@ -33,8 +44,20 @@ export default function CheckoutPage() {
     const tax = subtotal * 0.08;
     const total = subtotal + shipping + tax;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const form = useForm<ShippingAddress>({
+        resolver: zodResolver(shippingAddressSchema),
+        defaultValues: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            address: "",
+            city: "",
+            zip: "",
+            country: "US",
+        },
+    });
+
+    const onSubmit = async (values: ShippingAddress) => {
         setLoading(true);
 
         try {
@@ -42,12 +65,11 @@ export default function CheckoutPage() {
                 items: items.map(item => ({
                     productId: item.productId,
                     quantity: item.quantity
-                }))
+                })),
+                shippingAddress: values,
             });
 
             if (res.data?.url) {
-                // Determine if we should redirect externally (Stripe) or internally (Mock)
-                // For this implementation, we treat all URLs as destinations
                 const url = res.data.url;
                 if (url.startsWith("http")) {
                     window.location.href = url;
@@ -108,84 +130,138 @@ export default function CheckoutPage() {
                         animate={{ opacity: 1, x: 0 }}
                         className="lg:col-span-3 space-y-6"
                     >
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Shipping Information */}
-                            <div className="rounded-2xl border border-border bg-card p-6">
-                                <h2 className="text-lg font-semibold font-[family-name:var(--font-heading)] flex items-center gap-2 mb-4">
-                                    <Truck className="h-5 w-5 text-primary" /> Shipping Information
-                                </h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
-                                        <input id="firstName" type="text" required placeholder="John"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
-                                        <input id="lastName" type="text" required placeholder="Doe"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="sm:col-span-2 space-y-2">
-                                        <label htmlFor="email" className="text-sm font-medium">Email</label>
-                                        <input id="email" type="email" required placeholder="john@example.com"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="sm:col-span-2 space-y-2">
-                                        <label htmlFor="address" className="text-sm font-medium">Address</label>
-                                        <input id="address" type="text" required placeholder="123 Main St"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="city" className="text-sm font-medium">City</label>
-                                        <input id="city" type="text" required placeholder="New York"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="zip" className="text-sm font-medium">ZIP Code</label>
-                                        <input id="zip" type="text" required placeholder="10001"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                {/* Shipping Information */}
+                                <div className="rounded-2xl border border-border bg-card p-6">
+                                    <h2 className="text-lg font-semibold font-[family-name:var(--font-heading)] flex items-center gap-2 mb-4">
+                                        <Truck className="h-5 w-5 text-primary" /> Shipping Information
+                                    </h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="firstName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>First Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="John" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="lastName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Last Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Doe" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="sm:col-span-2">
+                                            <FormField
+                                                control={form.control}
+                                                name="email"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Email</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="john@example.com" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <FormField
+                                                control={form.control}
+                                                name="address"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Address</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="123 Main St" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <FormField
+                                            control={form.control}
+                                            name="city"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>City</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="New York" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="zip"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>ZIP Code</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="10001" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Payment Information */}
-                            <div className="rounded-2xl border border-border bg-card p-6">
-                                <h2 className="text-lg font-semibold font-[family-name:var(--font-heading)] flex items-center gap-2 mb-4">
-                                    <CreditCard className="h-5 w-5 text-primary" /> Payment
-                                </h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="sm:col-span-2 space-y-2">
-                                        <label htmlFor="cardNumber" className="text-sm font-medium">Card Number</label>
-                                        <input id="cardNumber" type="text" required placeholder="4242 4242 4242 4242"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                                {/* Payment Information - Static for now as it's mocked */}
+                                <div className="rounded-2xl border border-border bg-card p-6">
+                                    <h2 className="text-lg font-semibold font-[family-name:var(--font-heading)] flex items-center gap-2 mb-4">
+                                        <CreditCard className="h-5 w-5 text-primary" /> Payment
+                                    </h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="sm:col-span-2 space-y-2">
+                                            <label htmlFor="cardNumber" className="text-sm font-medium">Card Number</label>
+                                            <input id="cardNumber" type="text" placeholder="4242 4242 4242 4242"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label htmlFor="expiry" className="text-sm font-medium">Expiry</label>
+                                            <input id="expiry" type="text" placeholder="MM/YY"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label htmlFor="cvc" className="text-sm font-medium">CVC</label>
+                                            <input id="cvc" type="text" placeholder="123"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="expiry" className="text-sm font-medium">Expiry</label>
-                                        <input id="expiry" type="text" required placeholder="MM/YY"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="cvc" className="text-sm font-medium">CVC</label>
-                                        <input id="cvc" type="text" required placeholder="123"
-                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+                                    <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+                                        <Lock className="h-3.5 w-3.5" />
+                                        Secured with 256-bit SSL encryption
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
-                                    <Lock className="h-3.5 w-3.5" />
-                                    Secured with 256-bit SSL encryption
-                                </div>
-                            </div>
 
-                            <Button
-                                type="submit"
-                                variant="glow"
-                                size="xl"
-                                className="w-full"
-                                disabled={loading}
-                            >
-                                {loading ? "Processing..." : `Pay $${total.toFixed(2)}`}
-                            </Button>
-                        </form>
+                                <Button
+                                    type="submit"
+                                    variant="glow"
+                                    size="xl"
+                                    className="w-full"
+                                    disabled={loading}
+                                >
+                                    {loading ? "Processing..." : `Pay $${total.toFixed(2)}`}
+                                </Button>
+                            </form>
+                        </Form>
                     </motion.div>
 
                     {/* Order Summary — 2 columns */}

@@ -6,13 +6,16 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-    const { user, token } = useAuthStore();
+    const { user, accessToken, hasHydrated } = useAuthStore();
     const router = useRouter();
     const [isAuthorized, setIsAuthorized] = useState(false);
 
     useEffect(() => {
+        // Wait for hydration to finish
+        if (!hasHydrated) return;
+
         // If not logged in or no token, redirect to login
-        if (!token || !user) {
+        if (!accessToken || !user) {
             router.push("/login");
             return;
         }
@@ -25,7 +28,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
         // Authorized
         setIsAuthorized(true);
-    }, [user, token, router]);
+    }, [user, accessToken, hasHydrated, router]);
 
     if (!isAuthorized) {
         return (

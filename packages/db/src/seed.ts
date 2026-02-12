@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { hash } from "bcrypt";
 import dotenv from "dotenv";
-import * as schema from "./schema";
+import * as schema from "./schema.js";
 
 dotenv.config({ path: "../../.env" });
 
@@ -21,6 +21,8 @@ async function seed() {
     const sql = neon(databaseUrl);
     const db = drizzle(sql, { schema });
 
+    console.log("🌱 STARTING SEED SCRIPT...");
+    console.log("🌱 Database URL present:", !!databaseUrl);
     console.log("🌱 Seeding database...\n");
 
     // ── 1. Seed Admin + Test Users ─────────────────────────────────────────

@@ -160,9 +160,8 @@ function ProductsContent() {
                                     price={product.price}
                                     compareAtPrice={product.compareAtPrice}
                                     image={
-                                        product.images?.find((img: any) => img.isPrimary)?.url
+                                        product.images?.find((img) => img.isPrimary)?.url
                                         || product.images?.[0]?.url
-                                        || product.image
                                         || "/placeholder.png"
                                     }
                                     rating={product.rating}

@@ -11,6 +11,7 @@ import {
     Settings,
     LogOut,
     Menu,
+    Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -22,6 +23,7 @@ const sidebarLinks = [
     { href: "/admin/products", label: "Products", icon: ShoppingBag },
     { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
     { href: "/admin/customers", label: "Customers", icon: Users },
+    { href: "/admin/coupons", label: "Coupons", icon: Ticket },
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

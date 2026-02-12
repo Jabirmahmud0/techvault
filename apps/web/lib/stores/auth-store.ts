@@ -12,9 +12,11 @@ interface AuthState {
     user: User | null;
     accessToken: string | null;
     isAuthenticated: boolean;
+    hasHydrated: boolean;
     setAuth: (user: User, accessToken: string) => void;
     updateUser: (user: Partial<User>) => void;
     logout: () => void;
+    setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,9 +25,12 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             accessToken: null,
             isAuthenticated: false,
+            hasHydrated: false,
 
             setAuth: (user, accessToken) =>
                 set({ user, accessToken, isAuthenticated: true }),
+
+            setHasHydrated: (state) => set({ hasHydrated: state }),
 
             updateUser: (updates) =>
                 set((state) => ({
@@ -36,6 +41,9 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: "techvault-auth",
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
         }
     )
 );

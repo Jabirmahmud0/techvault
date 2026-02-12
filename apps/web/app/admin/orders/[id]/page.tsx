@@ -203,10 +203,22 @@ export default function AdminOrderDetailsPage() {
                             <Separator />
                             <div>
                                 <div className="text-sm font-medium text-muted-foreground mb-2">Shipping Address</div>
-                                {/* TODO: Order should store shipping address snapshot */}
-                                <div className="text-sm text-muted-foreground italic">
-                                    Address snapshot not implemented yet.
-                                </div>
+                                {order.shippingAddress ? (
+                                    <div className="text-sm space-y-1">
+                                        <div className="font-medium">
+                                            {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                                        </div>
+                                        <div>{order.shippingAddress.address}</div>
+                                        <div>
+                                            {order.shippingAddress.city}, {order.shippingAddress.zip}
+                                        </div>
+                                        <div>{order.shippingAddress.country}</div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground italic">
+                                        No shipping address on file
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

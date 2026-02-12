@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { JwtPayload } from "@repo/types";
+import { createCheckoutSessionSchema } from "@repo/types";
 import { inArray } from "drizzle-orm";
 import { db } from "../../config/database.js";
 import { orders, orderItems, products } from "@repo/db/schema";
@@ -13,7 +14,8 @@ export const checkoutController = {
      */
     async createSession(req: Request, res: Response, next: NextFunction) {
         try {
-            const { items } = req.body;
+            const body = createCheckoutSessionSchema.parse(req.body);
+            const { items, shippingAddress } = body;
             const user = req.user as JwtPayload;
 
             // Verify items and calculate total
@@ -86,6 +88,7 @@ export const checkoutController = {
                 stripeSessionId: mockSessionId,
                 total: total.toString(),
                 status: "PAID", // Auto-pay for mock flow
+                shippingAddress: shippingAddress,
             }).returning();
 
             if (!newOrder) {

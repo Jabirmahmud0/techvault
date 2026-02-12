@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
+import { useState, useRef } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -17,9 +16,10 @@ interface ImageUploadProps {
 export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(value);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDragActive, setIsDragActive] = useState(false);
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
-        const file = acceptedFiles[0];
+    const handleFile = async (file: File) => {
         if (!file) return;
 
         // Create local preview
@@ -44,27 +44,61 @@ export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
         } finally {
             setLoading(false);
         }
-    }, [onChange]);
+    };
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            "image/*": [".png", ".jpg", ".jpeg", ".webp"],
-        },
-        maxFiles: 1,
-        disabled: loading,
-    });
+    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) handleFile(file);
+    };
+
+    const handleDragEnter = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading) setIsDragActive(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragActive(false);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragActive(false);
+        if (loading) return;
+
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith("image/")) {
+            handleFile(file);
+        }
+    };
+
+    const handleClick = () => {
+        if (!loading) fileInputRef.current?.click();
+    };
 
     const handleRemove = (e: React.MouseEvent) => {
         e.stopPropagation();
         onChange("");
         setPreview("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     return (
         <div className={cn("w-full", className)}>
             <div
-                {...getRootProps()}
+                onClick={handleClick}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 className={cn(
                     "relative border-2 border-dashed rounded-xl p-4 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 min-h-[200px]",
                     isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
@@ -72,10 +106,17 @@ export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
                     preview && "border-solid border-border p-2"
                 )}
             >
-                <input {...getInputProps()} />
+                <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={onFileChange}
+                    disabled={loading}
+                />
 
                 {preview ? (
-                    <div className="relative w-full h-full min-h-[200px] rounded-lg overflow-hidden">
+                    <div className="relative w-full h-full min-h-[200px] rounded-lg overflow-hidden group">
                         <Image
                             src={preview}
                             alt="Upload preview"

@@ -1,22 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
+export interface ProductImage {
+    id: string;
+    url: string;
+    isPrimary: boolean;
+    sortOrder: number;
+}
+
+export interface Category {
+    id: string;
+    name: string;
+    slug: string;
+}
+
 export interface Product {
     id: string;
     name: string;
     slug: string;
     price: number;
     compareAtPrice: number | null;
-    image: string;
+    // image: string; // Removed as it's not in API response
     rating: number;
     reviewCount: number;
     brand: string;
-    category: string;
+    category: Category | null; // Changed from string to object
     isFeatured: boolean;
     description: string;
     stock: number;
     specs: Record<string, string>;
-    images: string[];
+    images: ProductImage[]; // Changed from string[] to object array
 }
 
 interface ProductsResponse {

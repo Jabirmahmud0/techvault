@@ -24,15 +24,24 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
-export function ProductForm() {
+interface ProductFormProps {
+    /** If provided, the form operates in edit mode */
+    product?: any;
+    /** Product ID for edit mode (used in PUT request) */
+    productId?: string;
+}
+
+export function ProductForm({ product, productId }: ProductFormProps = {}) {
     const router = useRouter();
+    const queryClient = useQueryClient();
+    const isEditMode = !!product;
 
     // Fetch categories
     const { data: categoriesData } = useQuery({
@@ -46,42 +55,53 @@ export function ProductForm() {
     const form = useForm<CreateProductInput>({
         resolver: zodResolver(createProductSchema),
         defaultValues: {
-            name: "",
-            slug: "",
-            description: "",
-            shortDescription: "",
-            price: 0,
-            stock: 0,
-            sku: "",
-            brand: "",
-            isFeatured: false,
-            // categoryId triggers validation if empty, handled by schema
+            name: product?.name || "",
+            slug: product?.slug || "",
+            description: product?.description || "",
+            shortDescription: product?.shortDescription || "",
+            price: product?.price ? Number(product.price) : 0,
+            stock: product?.stock ?? 0,
+            sku: product?.sku || "",
+            brand: product?.brand || "",
+            isFeatured: product?.isFeatured ?? false,
+            categoryId: product?.categoryId || undefined,
+            images: product?.images?.map((img: any) => typeof img === "string" ? img : img.url) || [],
         },
     });
 
     const { watch, setValue } = form;
     const name = watch("name");
 
-    // Auto-generate slug from name
+    // Auto-generate slug from name (only in create mode)
     useEffect(() => {
-        if (name) {
+        if (!isEditMode && name) {
             const slug = name
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/^-+|-+$/g, "");
             setValue("slug", slug, { shouldValidate: true });
         }
-    }, [name, setValue]);
+    }, [name, setValue, isEditMode]);
 
     const onSubmit = async (values: CreateProductInput) => {
         try {
-            await api.post("/products", values);
-            toast.success("Product created successfully");
+            if (isEditMode && productId) {
+                await api.put(`/products/${productId}`, values);
+                toast.success("Product updated successfully");
+            } else {
+                await api.post("/products", values);
+                toast.success("Product created successfully");
+            }
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+            queryClient.invalidateQueries({ queryKey: ["product"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-product"] });
+            queryClient.invalidateQueries({ queryKey: ["admin"] });
             router.push("/admin/products");
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            toast.error(error.message || "Failed to create product");
+            toast.error(error.message || `Failed to ${isEditMode ? "update" : "create"} product`);
         }
     };
 
@@ -170,7 +190,7 @@ export function ProductForm() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a category" />
@@ -267,7 +287,7 @@ export function ProductForm() {
                 {/* Submit */}
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Product
+                    {isEditMode ? "Update Product" : "Create Product"}
                 </Button>
             </form>
         </Form>

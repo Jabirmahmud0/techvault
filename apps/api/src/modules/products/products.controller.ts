@@ -64,4 +64,24 @@ export const productsController = {
             next(error);
         }
     },
+
+    /** GET /api/products/by-id/:id */
+    async getById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await productsService.getById(req.params.id!);
+            res.status(200).json({ success: true, data });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /** DELETE /api/products/:id (Admin/Seller only) */
+    async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            await productsService.delete(req.params.id!);
+            res.status(200).json({ success: true, message: "Product deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    },
 };

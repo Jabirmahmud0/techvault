@@ -175,15 +175,15 @@ export default function ProductDetailPage({
                         {/* Price */}
                         <div className="flex items-baseline gap-3">
                             <span className="text-3xl font-bold text-primary">
-                                ${product.price.toFixed(2)}
+                                ${Number(product.price).toFixed(2)}
                             </span>
                             {product.compareAtPrice && (
                                 <>
                                     <span className="text-xl text-muted-foreground line-through">
-                                        ${product.compareAtPrice.toFixed(2)}
+                                        ${Number(product.compareAtPrice).toFixed(2)}
                                     </span>
                                     <span className="rounded-lg bg-destructive/10 px-2 py-0.5 text-sm font-semibold text-destructive">
-                                        Save ${(product.compareAtPrice - product.price).toFixed(2)}
+                                        Save ${(Number(product.compareAtPrice) - Number(product.price)).toFixed(2)}
                                     </span>
                                 </>
                             )}
@@ -263,25 +263,27 @@ export default function ProductDetailPage({
                         </div>
 
                         {/* Specs Table */}
-                        <div className="pt-6">
-                            <h2 className="text-lg font-semibold mb-4 font-[family-name:var(--font-heading)]">
-                                Specifications
-                            </h2>
-                            <div className="rounded-xl border border-border overflow-hidden">
-                                {Object.entries(product.specs).map(([key, value], i) => (
-                                    <div
-                                        key={key}
-                                        className={cn(
-                                            "flex items-center justify-between px-4 py-3 text-sm",
-                                            i % 2 === 0 ? "bg-muted/50" : ""
-                                        )}
-                                    >
-                                        <span className="text-muted-foreground">{key}</span>
-                                        <span className="font-medium">{value}</span>
-                                    </div>
-                                ))}
+                        {product.specs && Object.keys(product.specs).length > 0 && (
+                            <div className="pt-6">
+                                <h2 className="text-lg font-semibold mb-4 font-[family-name:var(--font-heading)]">
+                                    Specifications
+                                </h2>
+                                <div className="rounded-xl border border-border overflow-hidden">
+                                    {Object.entries(product.specs).map(([key, value], i) => (
+                                        <div
+                                            key={key}
+                                            className={cn(
+                                                "flex items-center justify-between px-4 py-3 text-sm",
+                                                i % 2 === 0 ? "bg-muted/50" : ""
+                                            )}
+                                        >
+                                            <span className="text-muted-foreground">{key}</span>
+                                            <span className="font-medium">{value}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </motion.div>
                 </div>
             </div>

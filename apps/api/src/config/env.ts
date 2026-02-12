@@ -1,4 +1,5 @@
 import { z } from "zod";
+console.log("Starting env load...");
 import dotenv from "dotenv";
 
 // Load root .env first (DB, JWT, server config)

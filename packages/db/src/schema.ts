@@ -10,6 +10,7 @@ import {
     pgEnum,
     uniqueIndex,
     index,
+    json,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -262,6 +263,7 @@ export const orders = pgTable("orders", {
     status: text("status", { enum: ["PENDING", "PAID", "FAILED"] })
         .default("PENDING")
         .notNull(),
+    shippingAddress: json("shipping_address"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -351,3 +353,18 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
         references: [users.id],
     }),
 }));
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+export const settings = pgTable("settings", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeName: varchar("store_name", { length: 255 }).default("TechVault").notNull(),
+    storeEmail: varchar("store_email", { length: 255 }).notNull(),
+    storeUrl: varchar("store_url", { length: 255 }),
+    currency: varchar("currency", { length: 10 }).default("USD").notNull(),
+    taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).default("0").notNull(),
+    shippingFee: decimal("shipping_fee", { precision: 10, scale: 2 }).default("0").notNull(),
+    freeShippingThreshold: decimal("free_shipping_threshold", { precision: 10, scale: 2 }),
+    lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

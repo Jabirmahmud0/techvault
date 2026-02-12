@@ -14,8 +14,63 @@ import cartRoutes from "./modules/cart/cart.routes.js";
 import checkoutRoutes from "./modules/checkout/checkout.routes.js";
 import ordersRoutes from "./modules/orders/orders.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
+import couponsRoutes from "./modules/coupons/coupons.routes.js";
+import { settingsRouter } from "./modules/settings/settings.routes.js";
+
+
+
+
+import { db } from "./config/database.js";
+import { sql } from "drizzle-orm";
 
 const app = express();
+
+app.get("/api/fix-db-settings", async (req, res) => {
+  try {
+    console.log("Attempting migration fix...");
+    await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS settings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                store_name VARCHAR(255) DEFAULT 'TechVault' NOT NULL,
+                store_email VARCHAR(255) NOT NULL,
+                store_url VARCHAR(255),
+                currency VARCHAR(10) DEFAULT 'USD' NOT NULL,
+                tax_rate DECIMAL(5, 2) DEFAULT 0 NOT NULL,
+                shipping_fee DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+                free_shipping_threshold DECIMAL(10, 2),
+                low_stock_threshold INTEGER DEFAULT 10 NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+            );
+        `);
+    console.log("Table created (or existed).");
+    await db.execute(sql`
+            INSERT INTO settings (store_name, store_email, currency, tax_rate, shipping_fee, low_stock_threshold)
+            SELECT 'TechVault', 'admin@techvault.com', 'USD', 0, 0, 10
+            WHERE NOT EXISTS (SELECT 1 FROM settings)
+        `);
+    console.log("Data inserted.");
+    res.send("Migration fix applied successfully.");
+  } catch (e: any) {
+    console.error("Migration failed:", e);
+    res.status(500).send("Migration fix failed: " + e.message);
+  }
+});
+
+app.get("/api/fix-db-shipping", async (req, res) => {
+  try {
+    console.log("Attempting shipping column fix...");
+    await db.execute(sql`
+            ALTER TABLE orders 
+            ADD COLUMN IF NOT EXISTS shipping_address JSONB;
+        `);
+    console.log("Column added (or existed).");
+    res.send("Shipping column fix applied successfully.");
+  } catch (e: any) {
+    console.error("Migration failed:", e);
+    res.status(500).send("Migration fix failed: " + e.message);
+  }
+});
 
 // ── Global Middleware ────────────────────────────────────────────────────
 
@@ -77,6 +132,9 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/coupons", couponsRoutes);
+app.use("/api/settings", settingsRouter);
 
 // ── 404 Handler ──────────────────────────────────────────────────────────
 
