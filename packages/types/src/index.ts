@@ -71,6 +71,7 @@ export const createProductSchema = z.object({
     categoryId: z.string().uuid(),
     isFeatured: z.boolean().default(false),
     specifications: z.string().optional(),
+    images: z.array(z.string().url()).optional(),
 });
 
 export const updateProductSchema = createProductSchema.partial();

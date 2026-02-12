@@ -98,9 +98,43 @@ export const authController = {
         }
     },
 
-    /** POST /api/auth/logout */
     async logout(_req: Request, res: Response) {
         res.clearCookie("refreshToken", { path: "/api/auth" });
         res.status(200).json({ success: true, message: "Logged out" });
+    },
+
+    /** POST /api/auth/google */
+    async googleLogin(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { credential } = req.body; // Google ID Token
+            if (!credential) {
+                res.status(400).json({ success: false, error: "Missing Google token" });
+                return;
+            }
+
+            const result = await authService.loginWithGoogle(credential);
+
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: "/api/auth",
+            });
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                },
+            });
+
+            // Send welcome email if it's a new user?
+            // Checking if newly created is hard here without refactor, skipping for now to avoid complexity.
+            // Or we could check if user.createdAt is very recent.
+        } catch (error) {
+            next(error);
+        }
     },
 };

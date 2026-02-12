@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { products } from "../products/products.data.js";
+import type { JwtPayload } from "@repo/types";
+import { inArray } from "drizzle-orm";
 import { db } from "../../config/database.js";
-import { orders, orderItems } from "@repo/db/schema";
+import { orders, orderItems, products } from "@repo/db/schema";
 import { ApiError } from "../../middleware/index.js";
 import { env } from "../../config/env.js";
 import { emailService } from "../email/email.service.js";
@@ -13,19 +14,33 @@ export const checkoutController = {
     async createSession(req: Request, res: Response, next: NextFunction) {
         try {
             const { items } = req.body;
-            const user = req.user;
-
-            if (!items || !Array.isArray(items) || items.length === 0) {
-                throw ApiError.badRequest("Cart is empty");
-            }
+            const user = req.user as JwtPayload;
 
             // Verify items and calculate total
+            // Filter out invalid items (e.g. old mock IDs like "5")
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            const validItems = items.filter((i: any) => uuidRegex.test(i.productId));
+
+            if (validItems.length === 0) {
+                throw ApiError.badRequest("Your cart contains invalid items. Please clear your cart and add products again.");
+            }
+
+            const productIds = validItems.map((i: any) => i.productId);
+            const dbProducts = await db.query.products.findMany({
+                where: inArray(products.id, productIds),
+                with: {
+                    images: true
+                }
+            });
+
+            const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
             let total = 0;
             const lineItems = [];
             const dbOrderItems = [];
 
             for (const item of items) {
-                const product = products.find((p) => p.id === item.productId);
+                const product = productMap.get(item.productId);
                 if (!product) {
                     throw ApiError.notFound(`Product with ID ${item.productId} not found`);
                 }
@@ -34,16 +49,18 @@ export const checkoutController = {
                     throw ApiError.badRequest(`Not enough stock for ${product.name}`);
                 }
 
-                total += product.price * item.quantity;
+                const price = Number(product.price);
+                total += price * item.quantity;
+                const imageUrls = product.images.map((img) => img.url);
 
                 lineItems.push({
                     price_data: {
                         currency: "usd",
                         product_data: {
                             name: product.name,
-                            images: product.images,
+                            images: imageUrls,
                         },
-                        unit_amount: Math.round(product.price * 100),
+                        unit_amount: Math.round(price * 100),
                     },
                     quantity: item.quantity,
                 });
@@ -51,9 +68,9 @@ export const checkoutController = {
                 dbOrderItems.push({
                     productId: product.id,
                     productName: product.name,
-                    productImage: product.images[0],
+                    productImage: imageUrls[0] || "",
                     quantity: item.quantity,
-                    price: product.price.toString(), // Store as string for decimal
+                    price: product.price, // Already string in DB schema, but typed as string|number in some ORM contexts? No, schema says decimal -> string
                 });
             }
 
@@ -65,7 +82,7 @@ export const checkoutController = {
 
             // Create Pending Order in DB
             const [newOrder] = await db.insert(orders).values({
-                userId: (user as any).id, // User is guaranteed by auth middleware
+                userId: user.userId, // User is guaranteed by auth middleware
                 stripeSessionId: mockSessionId,
                 total: total.toString(),
                 status: "PAID", // Auto-pay for mock flow
@@ -76,7 +93,7 @@ export const checkoutController = {
             }
 
             // Send order confirmation email (async)
-            const userEmail = (user as any).email;
+            const userEmail = user.email;
             if (userEmail) {
                 emailService.sendOrderConfirmation(userEmail, newOrder.id, total.toString()).catch(console.error);
             }

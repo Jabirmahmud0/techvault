@@ -153,7 +153,24 @@ function ProductsContent() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                             >
-                                <ProductCard {...product} />
+                                <ProductCard
+                                    id={product.id}
+                                    name={product.name}
+                                    slug={product.slug}
+                                    price={product.price}
+                                    compareAtPrice={product.compareAtPrice}
+                                    image={
+                                        product.images?.find((img: any) => img.isPrimary)?.url
+                                        || product.images?.[0]?.url
+                                        || product.image
+                                        || "/placeholder.png"
+                                    }
+                                    rating={product.rating}
+                                    reviewCount={product.reviewCount}
+                                    brand={product.brand}
+                                    category={product.category?.name}
+                                    isFeatured={product.isFeatured}
+                                />
                             </motion.div>
                         ))}
                     </motion.div>

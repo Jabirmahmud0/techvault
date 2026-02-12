@@ -1,7 +1,9 @@
 "use client";
 
+
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
     ArrowLeft,
@@ -21,7 +23,7 @@ import { useRouter } from "next/navigation";
  * Checkout page with order summary and shipping/payment form.
  */
 export default function CheckoutPage() {
-    const { items, totalPrice } = useCartStore();
+    const { items, totalPrice, clearCart } = useCartStore();
     const [loading, setLoading] = useState(false);
 
     const router = useRouter();
@@ -53,9 +55,17 @@ export default function CheckoutPage() {
                     router.push(url);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Checkout validation failed", error);
-            // TODO: simple toast notification
+            const message = error.message || "Something went wrong";
+
+            if (message.includes("invalid items")) {
+                toast.error("Cart contained invalid items and has been cleared. Please add products again.");
+                clearCart();
+                router.push("/products");
+            } else {
+                toast.error(message);
+            }
         } finally {
             setLoading(false);
         }

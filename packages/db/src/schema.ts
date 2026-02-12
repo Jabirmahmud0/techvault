@@ -33,6 +33,8 @@ export const users = pgTable("users", {
     passwordHash: text("password_hash"),
     image: text("image"),
     role: userRoleEnum("role").default("USER").notNull(),
+    authProvider: text("auth_provider", { enum: ["EMAIL", "GOOGLE"] }).default("EMAIL"),
+    googleId: varchar("google_id", { length: 255 }).unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

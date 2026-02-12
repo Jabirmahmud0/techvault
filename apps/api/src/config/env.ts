@@ -1,7 +1,10 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 
+// Load root .env first (DB, JWT, server config)
 dotenv.config({ path: "../../.env" });
+// Load local .env second — overrides root values where present (OAuth, Cloudinary, etc.)
+dotenv.config({ override: true });
 
 /**
  * Environment variable schema — validated at startup.
@@ -23,9 +26,16 @@ const envSchema = z.object({
 
     // CORS
     FRONTEND_URL: z.string().url().default("http://localhost:3000"),
+
+    // Google OAuth
+    GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
+    GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
 });
 
 /** Parsed and typed environment variables */
 export const env = envSchema.parse(process.env);
+
+// Diagnostic: Show which DATABASE_URL is loaded
+console.log("📦 DATABASE_URL:", env.DATABASE_URL.replace(/:[^:@]+@/, ":****@"));
 
 export type Env = z.infer<typeof envSchema>;

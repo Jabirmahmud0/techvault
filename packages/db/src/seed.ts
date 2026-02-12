@@ -37,6 +37,7 @@ async function seed() {
             role: "ADMIN",
             emailVerified: true,
         })
+        .onConflictDoNothing()
         .returning();
 
     const [testUser] = await db
@@ -48,7 +49,13 @@ async function seed() {
             role: "USER",
             emailVerified: true,
         })
+        .onConflictDoNothing()
         .returning();
+
+    // If users already existed, fetch them
+    const { eq } = await import("drizzle-orm");
+    const admin = adminUser ?? await db.query.users.findFirst({ where: eq(schema.users.email, "admin@techvault.com") });
+    const testUsr = testUser ?? await db.query.users.findFirst({ where: eq(schema.users.email, "user@techvault.com") });
 
     console.log(`  ✅ Admin: admin@techvault.com / Admin123!`);
     console.log(`  ✅ User: user@techvault.com / User1234!\n`);
@@ -66,10 +73,17 @@ async function seed() {
     const insertedCategories = await db
         .insert(schema.categories)
         .values(categoryData)
+        .onConflictDoNothing()
         .returning();
 
+    // If categories already existed, fetch them all
+    let categoryList = insertedCategories;
+    if (insertedCategories.length === 0) {
+        categoryList = await db.query.categories.findMany();
+    }
+
     const categoryMap = Object.fromEntries(
-        insertedCategories.map((c) => [c.slug, c.id])
+        categoryList.map((c) => [c.slug, c.id])
     );
     console.log(`  ✅ Created ${insertedCategories.length} categories\n`);
 
@@ -88,7 +102,7 @@ async function seed() {
             sku: "APPL-IP15PM-256",
             brand: "Apple",
             categoryId: categoryMap["smartphones"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: "6.7-inch Super Retina XDR", chip: "A17 Pro", storage: "256GB", camera: "48MP + 12MP + 12MP", battery: "4441 mAh" }),
         },
@@ -103,7 +117,7 @@ async function seed() {
             sku: "SAM-GS24U-256",
             brand: "Samsung",
             categoryId: categoryMap["smartphones"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: "6.8-inch Dynamic AMOLED 2X", chip: "Snapdragon 8 Gen 3", storage: "256GB", camera: "200MP + 12MP + 50MP + 10MP", battery: "5000 mAh" }),
         },
@@ -117,7 +131,7 @@ async function seed() {
             sku: "GOOG-PX9P-128",
             brand: "Google",
             categoryId: categoryMap["smartphones"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: "6.3-inch LTPO OLED", chip: "Tensor G4", storage: "128GB", camera: "50MP + 48MP + 48MP", battery: "4700 mAh" }),
         },
@@ -131,7 +145,7 @@ async function seed() {
             sku: "OP-12-256",
             brand: "OnePlus",
             categoryId: categoryMap["smartphones"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: "6.82-inch LTPO AMOLED", chip: "Snapdragon 8 Gen 3", storage: "256GB", camera: "50MP + 48MP + 64MP", battery: "5400 mAh" }),
         },
@@ -147,7 +161,7 @@ async function seed() {
             sku: "APPL-MBP16-M3M",
             brand: "Apple",
             categoryId: categoryMap["laptops"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: '16.2-inch Liquid Retina XDR', chip: "Apple M3 Max", memory: "36GB", storage: "1TB SSD", battery: "22 hours" }),
         },
@@ -161,7 +175,7 @@ async function seed() {
             sku: "DELL-XPS15-512",
             brand: "Dell",
             categoryId: categoryMap["laptops"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: '15.6-inch OLED 3.5K', processor: "Intel Core Ultra 9", memory: "32GB DDR5", storage: "512GB SSD", battery: "13 hours" }),
         },
@@ -176,7 +190,7 @@ async function seed() {
             sku: "ASUS-ROGG16",
             brand: "ASUS",
             categoryId: categoryMap["laptops"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: '16-inch IPS 240Hz', processor: "Intel Core i9-14900HX", gpu: "NVIDIA RTX 4070", memory: "16GB DDR5", storage: "1TB SSD" }),
         },
@@ -190,7 +204,7 @@ async function seed() {
             sku: "LEN-X1C-G12",
             brand: "Lenovo",
             categoryId: categoryMap["laptops"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: '14-inch 2.8K OLED', processor: "Intel Core Ultra 7 vPro", memory: "32GB LPDDR5x", storage: "512GB SSD", weight: "1.09 kg" }),
         },
@@ -205,7 +219,7 @@ async function seed() {
             sku: "APPL-IPADP13-M4",
             brand: "Apple",
             categoryId: categoryMap["tablets"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: '13-inch Ultra Retina XDR', chip: "Apple M4", storage: "256GB", connectivity: "Wi-Fi 6E", weight: "579 g" }),
         },
@@ -219,7 +233,7 @@ async function seed() {
             sku: "SAM-TABS9U-256",
             brand: "Samsung",
             categoryId: categoryMap["tablets"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: '14.6-inch Dynamic AMOLED 2X', chip: "Snapdragon 8 Gen 2", storage: "256GB", battery: "11200 mAh", spen: "Included" }),
         },
@@ -234,7 +248,7 @@ async function seed() {
             sku: "APPL-AWU2-49",
             brand: "Apple",
             categoryId: categoryMap["smartwatches"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: "49mm Always-On Retina", chip: "S9 SiP", battery: "36 hours", waterResistance: "100m", gps: "Dual-frequency L1/L5" }),
         },
@@ -249,7 +263,7 @@ async function seed() {
             sku: "SAM-GW6C-47",
             brand: "Samsung",
             categoryId: categoryMap["smartwatches"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: "47mm Super AMOLED", chip: "Exynos W930", battery: "425 mAh", waterResistance: "5ATM+IP68", os: "Wear OS 4" }),
         },
@@ -263,7 +277,7 @@ async function seed() {
             sku: "GAR-F7XP-51",
             brand: "Garmin",
             categoryId: categoryMap["smartwatches"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: "51mm MIP", battery: "Up to 37 days", gps: "Multi-band GNSS", waterResistance: "10ATM", solar: "Power Glass" }),
         },
@@ -278,7 +292,7 @@ async function seed() {
             sku: "SONY-A7RV",
             brand: "Sony",
             categoryId: categoryMap["cameras"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ sensor: "61MP Full-Frame Exmor R", autofocus: "759-point AI AF", video: "8K 24p / 4K 120p", stabilization: "8-stop IBIS", evf: "9.44M-dot OLED" }),
         },
@@ -292,7 +306,7 @@ async function seed() {
             sku: "CAN-R5MII",
             brand: "Canon",
             categoryId: categoryMap["cameras"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ sensor: "45MP Full-Frame CMOS", autofocus: "Dual Pixel CMOS AF II", video: "8K RAW 30p / 4K 120p", stabilization: "8.5-stop IBIS", evf: "5.76M-dot OLED" }),
         },
@@ -306,7 +320,7 @@ async function seed() {
             sku: "FUJI-XT5",
             brand: "Fujifilm",
             categoryId: categoryMap["cameras"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ sensor: "40MP APS-C X-Trans CMOS 5 HR", autofocus: "425-point hybrid AF", video: "6.2K 30p / 4K 60p", stabilization: "7-stop IBIS", filmSimulations: "19 modes" }),
         },
@@ -320,7 +334,7 @@ async function seed() {
             sku: "NIK-Z8",
             brand: "Nikon",
             categoryId: categoryMap["cameras"]!,
-            sellerId: adminUser!.id,
+            sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ sensor: "45.7MP Full-Frame Stacked CMOS", autofocus: "Subject Detection AF", video: "8K 30p / 4K 120p", stabilization: "6-stop IBIS", evf: "3.69M-dot" }),
         },
@@ -329,6 +343,7 @@ async function seed() {
     const insertedProducts = await db
         .insert(schema.products)
         .values(productData)
+        .onConflictDoNothing()
         .returning();
 
     console.log(`  ✅ Created ${insertedProducts.length} products\n`);
@@ -343,7 +358,9 @@ async function seed() {
         sortOrder: 0,
     }));
 
-    await db.insert(schema.productImages).values(imageData);
+    if (imageData.length > 0) {
+        await db.insert(schema.productImages).values(imageData).onConflictDoNothing();
+    }
     console.log(`  ✅ Created ${imageData.length} product images\n`);
 
     // ── 5. Seed Coupons ────────────────────────────────────────────────────
@@ -363,7 +380,7 @@ async function seed() {
             minOrderAmount: "100.00",
             expiresAt: new Date("2027-06-30"),
         },
-    ]);
+    ]).onConflictDoNothing();
     console.log(`  ✅ Created 2 coupons\n`);
 
     console.log("✅ Database seeded successfully!");

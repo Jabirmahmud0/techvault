@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { GoogleLoginBtn } from "@/components/auth/google-login-btn";
 
 /**
  * Login page with glassmorphism card design.
@@ -42,7 +43,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12 relative w-full overflow-hidden">
             {/* Background gradient */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-[120px]" />
@@ -52,7 +53,7 @@ export default function LoginPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative w-full max-w-md"
+                className="relative w-full max-w-md z-10"
             >
                 <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
                     {/* Logo */}
@@ -138,10 +139,27 @@ export default function LoginPage() {
                             className="w-full"
                             disabled={loading}
                         >
-                            {loading ? "Signing in..." : "Sign In"}
-                            <ArrowRight className="h-4 w-4" />
+                            {loading ? (
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            ) : (
+                                "Sign In"
+                            )}
+                            <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                     </form>
+
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-border/50" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
+                    <GoogleLoginBtn />
 
                     <p className="mt-6 text-center text-sm text-muted-foreground">
                         Don&apos;t have an account?{" "}

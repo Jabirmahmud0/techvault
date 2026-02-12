@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
@@ -52,12 +53,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${outfit.variable} antialiased`}>
         <Providers>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-          <CartSidebar />
+          <AuthProvider>
+            <div className="flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <CartSidebar />
+          </AuthProvider>
         </Providers>
       </body>
     </html>

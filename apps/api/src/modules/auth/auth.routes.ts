@@ -11,6 +11,9 @@ router.post("/register", validate(registerSchema), authController.register);
 /** POST /api/auth/login — Login with email/password */
 router.post("/login", validate(loginSchema), authController.login);
 
+/** POST /api/auth/google — Login with Google */
+router.post("/google", authController.googleLogin);
+
 /** POST /api/auth/refresh — Refresh access token */
 router.post("/refresh", authController.refresh);
 

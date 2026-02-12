@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { GoogleLoginBtn } from "@/components/auth/google-login-btn";
 import { cn } from "@/lib/utils";
 
 const passwordRequirements = [
@@ -179,6 +180,19 @@ export default function RegisterPage() {
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </form>
+
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-border/50" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
+                    <GoogleLoginBtn />
 
                     <p className="mt-6 text-center text-sm text-muted-foreground">
                         Already have an account?{" "}

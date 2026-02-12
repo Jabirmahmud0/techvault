@@ -1,6 +1,12 @@
 import { useAuthStore } from "./stores/auth-store";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+// On the client (browser), use same-origin path so requests go through
+// the Next.js rewrite proxy defined in next.config.js.
+// On the server (SSR), call the backend directly since rewrites don't apply.
+const API_BASE_URL =
+    typeof window !== "undefined"
+        ? (process.env.NEXT_PUBLIC_API_URL || "/api")
+        : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api");
 
 /**
  * Typed fetch wrapper for API calls.
@@ -87,22 +93,46 @@ export async function apiClient<T>(
 
 /** Convenience methods */
 export const api = {
-    get: <T>(endpoint: string) => apiClient<T>(endpoint),
+    get: <T>(endpoint: string, params?: Record<string, any>, options?: RequestInit) => {
+        let url = endpoint;
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== "") {
+                    searchParams.append(key, String(value));
+                }
+            });
+            const queryString = searchParams.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+        }
+        return apiClient<T>(url, options);
+    },
 
-    post: <T>(endpoint: string, body: unknown) =>
+    post: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
         apiClient<T>(endpoint, {
+            ...options,
             method: "POST",
             body: JSON.stringify(body),
         }),
 
-    put: <T>(endpoint: string, body: unknown) =>
+    put: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
         apiClient<T>(endpoint, {
+            ...options,
             method: "PUT",
             body: JSON.stringify(body),
         }),
 
-    delete: <T>(endpoint: string) =>
-        apiClient<T>(endpoint, { method: "DELETE" }),
+    patch: <T>(endpoint: string, body: unknown, options?: RequestInit) =>
+        apiClient<T>(endpoint, {
+            ...options,
+            method: "PATCH",
+            body: JSON.stringify(body),
+        }),
+
+    delete: <T>(endpoint: string, options?: RequestInit) =>
+        apiClient<T>(endpoint, { ...options, method: "DELETE" }),
 
     logout: async () => {
         try {
@@ -115,3 +145,4 @@ export const api = {
         }
     },
 };
+

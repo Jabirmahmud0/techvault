@@ -1,8 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { db } from "../../config/database.js";
-import { orders, orderItems } from "@repo/db/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { ApiError } from "../../middleware/index.js";
+import { ordersService } from "./orders.service.js";
 
 export const ordersController = {
     /**
@@ -10,19 +7,9 @@ export const ordersController = {
      */
     async list(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = req.user;
-
-            const userOrders = await db.query.orders.findMany({
-                where: eq(orders.userId, (user as any).id),
-                orderBy: [desc(orders.createdAt)],
-                with: {
-                    items: true
-                }
-            });
-
-            res.json({
-                data: userOrders
-            });
+            const userId = (req.user as any).userId;
+            const data = await ordersService.listUserOrders(userId);
+            res.json({ success: true, data });
         } catch (error) {
             next(error);
         }
@@ -33,30 +20,47 @@ export const ordersController = {
      */
     async get(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = req.user;
+            const userId = (req.user as any)?.userId;
+            const userRole = (req.user as any)?.role;
             const { id } = req.params;
 
-            if (!id) {
-                throw ApiError.badRequest("Order ID is required");
-            }
+            const isAdmin = userRole === "ADMIN";
+            const data = await ordersService.getOrder(id as string, userId, isAdmin);
 
-            const order = await db.query.orders.findFirst({
-                where: and(
-                    eq(orders.id, id as string),
-                    eq(orders.userId, (user as any).id)
-                ),
-                with: {
-                    items: true
-                }
+            res.json({ success: true, data });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /**
+     * List all orders (Admin)
+     */
+    async listAll(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { page, limit, search, status } = req.query;
+            const result = await ordersService.listAllOrders({
+                page: Number(page) || 1,
+                limit: Number(limit) || 10,
+                search: search ? String(search) : undefined,
+                status: status ? String(status) : undefined,
             });
+            res.json({ success: true, ...result });
+        } catch (error) {
+            next(error);
+        }
+    },
 
-            if (!order) {
-                throw ApiError.notFound("Order not found");
-            }
+    /**
+     * Update order status (Admin)
+     */
+    async updateStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
 
-            res.json({
-                data: order
-            });
+            const data = await ordersService.updateStatus(id as string, status);
+            res.json({ success: true, data });
         } catch (error) {
             next(error);
         }

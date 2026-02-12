@@ -143,4 +143,72 @@ export const authService = {
 
         return sanitizeUser(user);
     },
+
+    /**
+     * Login or Register with Google ID Token.
+     */
+    async loginWithGoogle(tokenId: string) {
+        const { OAuth2Client } = await import("google-auth-library");
+        const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+
+        let ticket;
+        try {
+            ticket = await client.verifyIdToken({
+                idToken: tokenId,
+                audience: env.GOOGLE_CLIENT_ID,
+            });
+        } catch (error) {
+            throw ApiError.unauthorized("Invalid Google token");
+        }
+
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            throw ApiError.unauthorized("Invalid Google token payload");
+        }
+
+        const { email, sub: googleId, name, picture } = payload;
+
+        // Check if user exists
+        let user = await db.query.users.findFirst({
+            where: eq(users.email, email),
+        });
+
+        if (!user) {
+            // Create new user (random password since they use Google)
+            const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);
+
+            [user] = await db
+                .insert(users)
+                .values({
+                    name: name || "Google User",
+                    email,
+                    passwordHash,
+                    authProvider: "GOOGLE",
+                    googleId,
+                    image: picture,
+                    emailVerified: true, // Google emails are verified
+                    role: "USER"
+                })
+                .returning();
+        } else if (!user.googleId) {
+            // Link Google ID to existing user
+            [user] = await db
+                .update(users)
+                .set({ googleId, authProvider: "GOOGLE", image: picture || user.image, emailVerified: true })
+                .where(eq(users.id, user.id))
+                .returning();
+        }
+
+        const tokens = generateTokens({
+            userId: user!.id,
+            email: user!.email,
+            role: user!.role,
+        });
+
+        return {
+            user: sanitizeUser(user!),
+            ...tokens,
+        };
+    },
 };

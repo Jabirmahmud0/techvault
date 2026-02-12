@@ -23,7 +23,17 @@ export function validate(schema: z.ZodSchema, source: "body" | "query" | "params
             }
 
             // Replace with parsed/coerced values
-            req[source] = result.data;
+            // In Express 5, req.query and req.params are getter-only,
+            // so we use Object.defineProperty to override them.
+            if (source === "body") {
+                req.body = result.data;
+            } else {
+                Object.defineProperty(req, source, {
+                    value: result.data,
+                    writable: true,
+                    configurable: true,
+                });
+            }
             next();
         } catch (error) {
             next(error);

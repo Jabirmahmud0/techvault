@@ -40,9 +40,15 @@ export function ProductCard({
 }: ProductCardProps) {
     const { addItem } = useCartStore();
 
+    // DB stores decimals as strings — parse to numbers
+    const numPrice = typeof price === "string" ? parseFloat(price) : price;
+    const numCompareAtPrice = compareAtPrice
+        ? typeof compareAtPrice === "string" ? parseFloat(compareAtPrice as string) : compareAtPrice
+        : null;
+
     const discount =
-        compareAtPrice && compareAtPrice > price
-            ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+        numCompareAtPrice && numCompareAtPrice > numPrice
+            ? Math.round(((numCompareAtPrice - numPrice) / numCompareAtPrice) * 100)
             : null;
 
     const handleAddToCart = (e: React.MouseEvent) => {
@@ -51,7 +57,7 @@ export function ProductCard({
             id,
             productId: id,
             name,
-            price,
+            price: numPrice,
             image,
             stock: 99,
             slug,
@@ -75,6 +81,7 @@ export function ProductCard({
                         src={image}
                         alt={name}
                         fill
+                        unoptimized
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -136,7 +143,7 @@ export function ProductCard({
                                         key={i}
                                         className={cn(
                                             "h-3.5 w-3.5",
-                                            i < Math.floor(rating)
+                                            i < Math.floor(Number(rating))
                                                 ? "text-yellow-500 fill-yellow-500"
                                                 : "text-muted-foreground/30"
                                         )}
@@ -152,11 +159,11 @@ export function ProductCard({
                     {/* Price */}
                     <div className="flex items-center gap-2">
                         <span className="text-lg font-bold text-primary">
-                            ${price.toFixed(2)}
+                            ${numPrice.toFixed(2)}
                         </span>
-                        {compareAtPrice && compareAtPrice > price && (
+                        {numCompareAtPrice && numCompareAtPrice > numPrice && (
                             <span className="text-sm text-muted-foreground line-through">
-                                ${compareAtPrice.toFixed(2)}
+                                ${numCompareAtPrice.toFixed(2)}
                             </span>
                         )}
                     </div>
