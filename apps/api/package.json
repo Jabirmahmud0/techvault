@@ -24,7 +24,8 @@
     "resend": "^4.1.2",
     "cloudinary": "^2.5.1",
     "google-auth-library": "^9.14.2",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "@upstash/redis": "^1.28.4"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
