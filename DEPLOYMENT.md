@@ -1,61 +1,63 @@
-# TechVault Deployment Guide — Vercel + Railway + Neon
+# TechVault Deployment Guide — Vercel + Render + Neon
 
 > Complete step-by-step deployment for the TechVault monorepo.
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```
 ┌────────────────┐     ┌──────────────────┐     ┌──────────────┐
-│   Vercel        │     │   Railway         │     │   Neon        │
+│   Vercel        │     │   Render          │     │   Neon        │
 │   (Next.js)     │────▶│   (Express API)   │────▶│   (Postgres)  │
 │   apps/web      │     │   apps/api        │     │   Free tier   │
-│   Free tier     │     │   $5/mo credit    │     │               │
+│   Free tier     │     │   Free tier       │     │               │
 └────────────────┘     └──────────────────┘     └──────────────┘
+                              ▲
+                       ┌──────┴───────┐
+                       │ Cron Pinger   │
+                       │ (keeps alive) │
+                       └──────────────┘
 ```
+
+> ⚠️ Render's free tier **sleeps after 15 min of inactivity**. A cron pinger keeps it awake.
 
 ---
 
 ## Prerequisites
 
 - GitHub repo pushed with latest code
-- Accounts on: [Neon](https://neon.tech), [Railway](https://railway.app), [Vercel](https://vercel.com)
+- Accounts on: [Neon](https://neon.tech), [Render](https://render.com), [Vercel](https://vercel.com)
 
 ---
 
 ## Step 1: Neon Database (Already Done ✅)
 
-You already have Neon set up. Just copy your `DATABASE_URL`:
-
-```
-postgresql://neondb_owner:****@ep-calm-darkness-a1ddlwe4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-```
-
-> **Tip**: Go to Neon Dashboard → your project → Connection Details → copy the connection string.
+Copy your `DATABASE_URL` from Neon Dashboard → Connection Details.
 
 ---
 
-## Step 2: Deploy API on Railway
+## Step 2: Deploy API on Render
 
-### 2a. Create project
+### 2a. Create Web Service
 
-1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
-2. Select your `techvault` repository
-3. Railway will detect it as a monorepo
+1. Go to [render.com](https://render.com) → **New** → **Web Service**
+2. Connect your GitHub repo (`techvault`)
+3. Fill in settings:
 
-### 2b. Configure service settings
+| Setting | Value |
+|---------|-------|
+| **Name** | `techvault-api` |
+| **Region** | Oregon (US West) or closest to you |
+| **Root Directory** | *(leave empty)* |
+| **Runtime** | Node |
+| **Build Command** | `npm ci && npx turbo run build --filter=api` |
+| **Start Command** | `node apps/api/dist/index.js` |
+| **Plan** | Free |
 
-1. Click on the deployed service → **Settings**
-2. **Root Directory**: Leave **EMPTY** (repo root) — the monorepo needs workspace resolution for `@repo/db` and `@repo/types`
-3. Railway will auto-detect the `railway.json` at the repo root, which sets:
-   - Build: `npm ci && npx turbo run build --filter=api`
-   - Start: `node apps/api/dist/index.js`
-   - Health check: `/api/health`
+### 2b. Set environment variables
 
-### 2c. Set environment variables
-
-Go to **Variables** tab and add ALL of these:
+Go to **Environment** tab → add these:
 
 | Variable | Value |
 |----------|-------|
@@ -66,7 +68,7 @@ Go to **Variables** tab and add ALL of these:
 | `JWT_REFRESH_SECRET` | *(your 64-char hex secret)* |
 | `JWT_ACCESS_EXPIRY` | `15m` |
 | `JWT_REFRESH_EXPIRY` | `7d` |
-| `FRONTEND_URL` | *(leave blank for now, fill after Vercel deploy)* |
+| `FRONTEND_URL` | *(fill after Vercel deploy, Step 3)* |
 | `GOOGLE_CLIENT_ID` | *(your Google OAuth client ID)* |
 | `GOOGLE_CLIENT_SECRET` | *(your Google OAuth secret)* |
 | `STRIPE_SECRET_KEY` | *(your Stripe secret key)* |
@@ -80,21 +82,11 @@ Go to **Variables** tab and add ALL of these:
 | `CLOUDINARY_API_KEY` | *(your Cloudinary API key)* |
 | `CLOUDINARY_API_SECRET` | *(your Cloudinary API secret)* |
 
-> **Optional**: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`
+### 2c. Deploy
 
-### 2d. Deploy
-
-1. Click **Deploy** — Railway will build using Nixpacks
-2. Wait for the build to complete and the health check to pass
-3. Go to **Settings** → **Networking** → **Generate Domain**
-4. Copy your Railway public URL, e.g.: `https://techvault-api-production.up.railway.app`
-
-### 2e. Update FRONTEND_URL
-
-After Vercel deploy (Step 3), come back and set:
-```
-FRONTEND_URL=https://your-app.vercel.app
-```
+1. Click **Create Web Service** → Render will build & deploy
+2. Your API URL will be: `https://techvault-api.onrender.com`
+3. Verify: visit `https://techvault-api.onrender.com/api/health`
 
 ---
 
@@ -104,9 +96,8 @@ FRONTEND_URL=https://your-app.vercel.app
 
 1. Go to [vercel.com](https://vercel.com) → **Add New** → **Project**
 2. Import your `techvault` GitHub repo
-3. Vercel will detect the monorepo
 
-### 3b. Configure project settings
+### 3b. Configure settings
 
 | Setting | Value |
 |---------|-------|
@@ -116,79 +107,89 @@ FRONTEND_URL=https://your-app.vercel.app
 | **Output Directory** | `.next` |
 | **Install Command** | `cd ../.. && npm install` |
 
-### 3c. Set environment variables
+### 3c. Set environment variable
 
 | Variable | Value |
 |----------|-------|
-| `NEXT_PUBLIC_API_URL` | `https://techvault-api-production.up.railway.app/api` |
-
-> ⚠️ **IMPORTANT**: Replace with your actual Railway URL from Step 2d. This is the URL your frontend will use to call the API.
+| `NEXT_PUBLIC_API_URL` | `https://techvault-api.onrender.com/api` |
 
 ### 3d. Deploy
 
-1. Click **Deploy**
-2. Wait for the build to complete
-3. Your site will be live at `https://your-app.vercel.app`
+Click **Deploy** → your site will be live at `https://your-app.vercel.app`
 
 ---
 
 ## Step 4: Connect Everything
 
-### 4a. Update Railway FRONTEND_URL
+### 4a. Set FRONTEND_URL on Render
 
-Go back to Railway → your API service → **Variables**:
+Go to Render → `techvault-api` → **Environment** → set:
 ```
 FRONTEND_URL=https://your-app.vercel.app
 ```
 
-This is needed for CORS (the API allows requests from this origin).
-
 ### 4b. Update Google OAuth
 
-Go to [Google Cloud Console](https://console.cloud.google.com/) → your project → **Credentials** → your OAuth 2.0 Client:
-
-1. Add to **Authorized JavaScript origins**:
-   - `https://your-app.vercel.app`
-2. Add to **Authorized redirect URIs**:
-   - `https://your-app.vercel.app/login`
+Go to [Google Cloud Console](https://console.cloud.google.com/) → Credentials → your OAuth Client:
+- **Authorized JavaScript origins**: add `https://your-app.vercel.app`
+- **Authorized redirect URIs**: add `https://your-app.vercel.app/login`
 
 ### 4c. Update Stripe Webhook
 
-Go to [Stripe Dashboard](https://dashboard.stripe.com/) → **Developers** → **Webhooks**:
-
-1. Add endpoint: `https://techvault-api-production.up.railway.app/api/stripe/webhook`
-2. Select events: `checkout.session.completed`, `payment_intent.succeeded`
-3. Copy the new webhook signing secret → update `STRIPE_WEBHOOK_SECRET` in Railway
+Stripe Dashboard → Webhooks → add endpoint:
+`https://techvault-api.onrender.com/api/stripe/webhook`
 
 ---
 
-## Step 5: Verify Deployment
+## Step 5: Set Up Cron Pinger ⏰
 
-### Quick checks
+Render's free tier sleeps after 15 min of inactivity. Use a free cron service to ping your API.
 
-1. **API Health**: Visit `https://your-railway-url.up.railway.app/api/health`
-   - Should return `{ "status": "ok" }`
+### Option A: cron-job.org (Recommended)
 
-2. **Frontend**: Visit `https://your-app.vercel.app`
-   - Homepage should load with products
+1. Go to [cron-job.org](https://cron-job.org) → Create free account
+2. **Create Cron Job**:
+   - **Title**: `TechVault API Pinger`
+   - **URL**: `https://techvault-api.onrender.com/api/health`
+   - **Schedule**: Every 14 minutes (`*/14 * * * *`)
+   - **Request Method**: GET
+3. **Save and Enable**
 
-3. **Auth flow**: Try registering → verify OTP → login
+### Option B: UptimeRobot
 
-4. **Products**: Browse products, check images load from Cloudinary
+1. Go to [uptimerobot.com](https://uptimerobot.com) → Create free account
+2. **Add New Monitor**:
+   - **Type**: HTTP(s)
+   - **URL**: `https://techvault-api.onrender.com/api/health`
+   - **Interval**: 5 minutes
+3. **Save**
+
+> Both services are completely free and will ping your API regularly to prevent sleep.
+
+---
+
+## Step 6: Verify Everything
+
+| Check | How |
+|-------|-----|
+| API Health | Visit `https://techvault-api.onrender.com/api/health` |
+| Frontend | Visit `https://your-app.vercel.app` |
+| Auth flow | Register → verify OTP → login |
+| Products | Browse products, check images |
+| Cron pinger | Check cron-job.org dashboard for successful pings |
 
 ---
 
 ## Custom Domain (Optional)
 
 ### Vercel
-1. Go to **Settings** → **Domains** → Add your domain
-2. Update DNS: Add CNAME record pointing to `cname.vercel-dns.com`
-3. Update `FRONTEND_URL` on Railway to your custom domain
+1. Settings → Domains → Add domain
+2. Add CNAME: `cname.vercel-dns.com`
+3. Update `FRONTEND_URL` on Render
 
-### Railway
-1. Go to **Settings** → **Networking** → **Custom Domain**
-2. Add your API subdomain (e.g., `api.yourdomain.com`)
-3. Update `NEXT_PUBLIC_API_URL` on Vercel to `https://api.yourdomain.com/api`
+### Render
+1. Settings → Custom Domain → Add `api.yourdomain.com`
+2. Update `NEXT_PUBLIC_API_URL` on Vercel
 
 ---
 
@@ -196,10 +197,10 @@ Go to [Stripe Dashboard](https://dashboard.stripe.com/) → **Developers** → *
 
 | Issue | Fix |
 |-------|-----|
-| CORS errors | Check `FRONTEND_URL` on Railway matches your Vercel URL exactly (no trailing slash) |
-| API returns 500 | Check Railway logs: **Deployments** → click latest → **View Logs** |
-| Build fails on Vercel | Make sure **Root Directory** is `apps/web` and **Install Command** is `cd ../.. && npm install` |
-| Build fails on Railway | Make sure `railway.json` is at the **repo root** (not in `apps/api/`) and Root Directory is empty |
-| Images not loading | Check `next.config.js` allows the image domains |
-| Google OAuth fails | Make sure Vercel URL is in authorized origins AND redirect URIs |
-| DB connection fails | Make sure `DATABASE_URL` has `?sslmode=require` |
+| CORS errors | `FRONTEND_URL` on Render must match Vercel URL exactly (no trailing slash) |
+| API returns 500 | Check Render logs: Dashboard → your service → **Logs** |
+| Slow first request | Render free tier cold start (~30s). Cron pinger prevents this |
+| Build fails on Vercel | Root Directory = `apps/web`, Install Command = `cd ../.. && npm install` |
+| Build fails on Render | Root Directory = empty, Build Command = `npm ci && npx turbo run build --filter=api` |
+| Google OAuth fails | Add Vercel URL to authorized origins AND redirect URIs |
+| DB connection fails | `DATABASE_URL` must have `?sslmode=require` |
