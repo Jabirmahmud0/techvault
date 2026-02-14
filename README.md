@@ -1,18 +1,16 @@
-# ⚡ TechVault - Production-Ready Electronics E-Commerce
+# ⚡ TechVault — Full-Stack Electronics E-Commerce Platform
 
 <div align="center">
 
-![TechVault Banner](https://via.placeholder.com/1200x400/0F172A/00D4AA?text=TechVault+%7C+Premium+Electronics+Store)
+### 🌐 **[Live Demo](https://gotechvault.vercel.app)** &nbsp;|&nbsp; 🔌 **[API Health](https://techvault-19lu.onrender.com/api/health)** &nbsp;|&nbsp; 📦 **[GitHub Repo](https://github.com/Jabirmahmud0/techvault)**
 
-### 🚀 **[Live Demo](https://techvault-demo.vercel.app)** | 📚 **[API Docs](https://techvault-api.railway.app/docs)** | 🎥 **[Video Walkthrough](#demo)**
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-336791?style=for-the-badge&logo=postgresql)](https://neon.tech/)
+[![Stripe](https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?style=for-the-badge&logo=turborepo)](https://turbo.build/)
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
-[![Stripe](https://img.shields.io/badge/Stripe-Live-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
-
-**Lighthouse Score: 96** | **Test Coverage: 78%** | **Bundle Size: 143KB** | **First Load: <2s**
+A **production-grade** electronics e-commerce platform with multi-role authentication, Stripe payments, seller/admin dashboards, and a modern responsive UI — built as a Turborepo monorepo.
 
 </div>
 
@@ -21,162 +19,125 @@
 ## 📖 Table of Contents
 
 - [Overview](#-overview)
-- [Demo & Screenshots](#-demo--screenshots)
 - [Tech Stack](#-tech-stack)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
-- [Performance Metrics](#-performance-metrics)
 - [Getting Started](#-getting-started)
 - [Deployment](#-deployment)
-- [Testing](#-testing)
-- [API Documentation](#-api-documentation)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [API Endpoints](#-api-endpoints)
+- [Author](#-author)
 
 ---
 
 ## 🎯 Overview
 
-**TechVault** is a **production-grade** electronics e-commerce platform built to demonstrate modern full-stack development practices. Unlike tutorial projects, this implements real-world concerns: multi-tenant architecture, payment processing, caching strategies, and comprehensive security.
+**TechVault** is a full-featured e-commerce platform for electronics, demonstrating modern full-stack development practices. It supports three user roles — **Customer**, **Seller**, and **Admin** — with complete shopping flows, payment processing, and management dashboards.
 
 ### Why This Project Stands Out
 
-- ✅ **Full Stripe integration** with webhook handling (not just Checkout)
-- ✅ **Redis caching layer** reducing database load by 60%+
-- ✅ **Multi-role RBAC** (Admin, Seller, User) with workspace isolation
-- ✅ **Type-safe end-to-end** with Zod validation on all boundaries
-- ✅ **Tested in production** with Sentry monitoring and error tracking
-- ✅ **Deployed microservices** (frontend on Vercel, backend on Railway)
-
-**Built for**: Portfolio demonstration, full-stack interviews, system design discussions
-
----
-
-## 🎥 Demo & Screenshots
-
-### Live Demo
-👉 **[techvault-demo.vercel.app](https://techvault-demo.vercel.app)**
-
-**Test Credentials:**
-```
-Admin:  admin@techvault.com / demo123
-Seller: seller@techvault.com / demo123
-User:   user@techvault.com / demo123
-
-Stripe Test Card: 4242 4242 4242 4242 | Exp: 12/34 | CVC: 123
-```
-
-### Screenshots
-
-<details>
-<summary><b>🖼️ Click to expand screenshots</b></summary>
-
-#### Hero Section with GSAP Animation
-![Hero](https://via.placeholder.com/1200x600/0F172A/00D4AA?text=Hero+Section+Animation)
-
-#### Product Grid with Framer Motion Stagger
-![Product Grid](https://via.placeholder.com/1200x600/1E293B/6366F1?text=Product+Grid+%7C+Infinite+Scroll)
-
-#### Kanban-Style Admin Dashboard
-![Admin Dashboard](https://via.placeholder.com/1200x600/111827/F59E0B?text=Admin+Dashboard+%7C+Analytics)
-
-#### Stripe Checkout Integration
-![Checkout](https://via.placeholder.com/1200x600/0A0F1E/10B981?text=Stripe+Checkout+Flow)
-
-</details>
-
-### 🎬 Video Walkthrough (60s)
-[![Watch Demo](https://img.shields.io/badge/▶️_Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://youtube.com/placeholder)
+- ✅ **Full Stripe integration** — Checkout sessions + webhook signature verification
+- ✅ **Custom JWT auth system** — Access/refresh token rotation with httpOnly cookies
+- ✅ **Google OAuth 2.0** — One-click sign-in with `@react-oauth/google`
+- ✅ **Email OTP verification** — Secure registration flow via Nodemailer
+- ✅ **Multi-role RBAC** — Admin, Seller, and Customer with route-level protection
+- ✅ **Type-safe end-to-end** — Zod validation on all API boundaries
+- ✅ **Monorepo architecture** — Turborepo with shared `@repo/db`, `@repo/types` packages
+- ✅ **Production deployed** — Vercel (frontend) + Render (API) + Neon (database)
 
 ---
 
 ## 🔧 Tech Stack
 
 ### Frontend
-| Technology | Purpose | Why This Choice |
-|------------|---------|-----------------|
-| **Next.js 15** | Framework | App Router for RSC, SSR/SSG/ISR flexibility |
-| **TypeScript** | Language | Strict mode, zero `any` types, full type safety |
-| **Tailwind CSS v4** | Styling | Utility-first, purged in production, 12KB CSS |
-| **shadcn/ui** | Components | Accessible, copy-paste, no vendor lock-in |
-| **Framer Motion** | Animation | Spring physics, layout animations, gestures |
-| **GSAP** | Scroll FX | Timeline-based hero section reveals |
-| **TanStack Query** | Data fetching | Cache management, infinite scroll, optimistic updates |
-| **Zustand** | State | Lightweight global cart/wishlist state |
-
-### Backend
-| Technology | Purpose | Why This Choice |
-|------------|---------|-----------------|
-| **Node.js + Express** | Runtime/Framework | Mature ecosystem, middleware chain |
-| **PostgreSQL** | Database | ACID compliance, relational schema design |
-| **Drizzle ORM** | ORM | Type-safe queries, zero runtime overhead |
-| **Redis (Upstash)** | Cache/Queue | Product cache, rate limiting, sessions |
-| **Stripe** | Payments | Production-ready checkout + webhooks |
-| **NextAuth v5** | Authentication | OAuth + credentials, JWT with refresh rotation |
-| **Resend** | Emails | Transactional emails (order confirm, reset) |
-| **Cloudinary** | CDN | Image uploads, transformations, delivery |
-
-### DevOps & Tooling
 | Technology | Purpose |
 |------------|---------|
-| **Turborepo** | Monorepo build orchestration |
-| **GitHub Actions** | CI/CD pipeline (lint → test → build → deploy) |
-| **Vercel** | Frontend deployment with preview URLs |
-| **Railway** | Backend hosting with auto-deploys |
-| **Neon** | Serverless Postgres with branching |
-| **Sentry** | Error tracking + performance monitoring |
-| **Vitest + Playwright** | Unit + E2E testing |
+| **Next.js 16** | App Router, React Server Components, SSR/SSG |
+| **React 19** | UI library with concurrent features |
+| **TypeScript 5.9** | Full type safety across the codebase |
+| **Tailwind CSS** | Utility-first responsive styling |
+| **Shadcn/UI + Radix UI** | Accessible, composable component library |
+| **Framer Motion** | Page transitions, micro-animations, gestures |
+| **TanStack Query** | Server state management, cache, optimistic updates |
+| **Zustand** | Client state (auth, cart, wishlist) with localStorage persist |
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| **Node.js + Express.js** | REST API server with middleware chain |
+| **TypeScript** | Type-safe controllers, services, and routes |
+| **PostgreSQL (Neon)** | Serverless relational database |
+| **Drizzle ORM** | Type-safe SQL queries, migrations, schema management |
+| **Zod** | Request/response validation on all endpoints |
+| **JWT (jsonwebtoken)** | Access + refresh token authentication |
+| **bcrypt** | Password hashing |
+| **Stripe** | Payment processing + webhook handling |
+| **Nodemailer** | OTP emails, order confirmations (Gmail SMTP) |
+| **Cloudinary + Multer** | Image uploads, transformations, CDN delivery |
+
+### Infrastructure & DevOps
+| Technology | Purpose |
+|------------|---------|
+| **Turborepo** | Monorepo build orchestration with caching |
+| **npm Workspaces** | Shared packages (`@repo/db`, `@repo/types`, `@repo/typescript-config`) |
+| **Vercel** | Frontend deployment with auto-deploy on push |
+| **Render** | Backend API hosting |
+| **Neon** | Serverless PostgreSQL with auto-scaling |
+| **Vitest** | Unit testing framework |
 
 ---
 
 ## ✨ Key Features
 
-### 🛒 E-Commerce Core
-- [x] **Product Catalog** with faceted filters (category, price, brand, rating)
-- [x] **Infinite Scroll** product listings with skeleton loaders
-- [x] **Advanced Search** with debounced autocomplete
-- [x] **Product Detail Page** with image zoom, 3D carousel, reviews
-- [x] **Shopping Cart** with persistent state (Zustand + localStorage)
-- [x] **Wishlist** with heart animation toggle
-- [x] **Checkout Flow** (multi-step form with address autocomplete)
-- [x] **Stripe Payments** (Payment Intent API + webhook signature verification)
-- [x] **Order Management** (history, status tracking, cancel within 1hr)
+### 🔒 Authentication & Authorization
+- Custom JWT auth with access (15min) + refresh (7d) token rotation
+- Google OAuth 2.0 single sign-on
+- Email OTP verification for new registrations
+- Role-based access control (Customer, Seller, Admin)
+- Persistent sessions with httpOnly cookie refresh tokens
+- Auto session sync across tabs via Zustand persist middleware
 
-### 🔒 Security & Auth
-- [x] **NextAuth v5** with Google OAuth + credentials provider
-- [x] **JWT + Refresh Tokens** (15min access, 7d refresh with rotation)
-- [x] **Role-Based Access Control** (Admin, Seller, User)
-- [x] **XSS Protection** with recursive input sanitization
-- [x] **Rate Limiting** (100 req/15min global, 20 req/15min auth routes)
-- [x] **Helmet.js** security headers
-- [x] **SQL Injection Prevention** via Drizzle ORM parameterized queries
-- [x] **CSRF Protection** on all state-changing operations
+### 🛒 Shopping Experience
+- Product catalog with search, filtering, sorting, and pagination
+- Category-based browsing with dynamic routes
+- Product detail pages with image galleries
+- Product reviews and star ratings with real-time aggregation
+- Wishlist management with persistence
+- Shopping cart with quantity management
+- Fully responsive design with dark/light theme toggle
 
-### 🎨 UI/UX Excellence
-- [x] **GSAP Hero Animation** (scroll-triggered product reveal)
-- [x] **Framer Motion** throughout (page transitions, card hovers, modals)
-- [x] **Fly-to-Cart Animation** (GSAP motionPath on add-to-cart)
-- [x] **Dark Mode** with smooth CSS variable transitions
-- [x] **Mobile Responsive** (touch-friendly, bottom sheet modals)
-- [x] **Skeleton Loaders** matching exact component layouts
-- [x] **Toast Notifications** with undo actions
+### 💳 Checkout & Payments
+- Stripe Checkout integration (secure hosted payment page)
+- Stripe Webhook handling with HMAC signature verification
+- Automated order creation on successful payment
+- Order confirmation emails via Nodemailer (Gmail SMTP)
 
-### ⚡ Performance
-- [x] **React Server Components** for product listings (zero hydration JS)
-- [x] **SSR** on product detail pages (fresh pricing, SEO)
-- [x] **ISR** on category pages (revalidate: 60s)
-- [x] **Redis Caching** (product listings, search results, 5min TTL)
-- [x] **Image Optimization** (next/image + Cloudinary CDN)
-- [x] **Code Splitting** (dynamic imports for heavy components)
-- [x] **Bundle Analysis** (143KB gzipped, tracked in CI)
+### 📦 Order Management
+- Real-time order tracking (Pending → Paid → Shipped → Delivered)
+- Order history with detailed order views
+- Shipping address management
 
-### 📊 Admin & Seller Features
-- [x] **Admin Dashboard** (revenue charts, inventory alerts, user management)
-- [x] **Seller Dashboard** (product CRUD, order fulfillment, earnings)
-- [x] **Analytics** (sales by category, conversion funnel, cohort retention)
-- [x] **Inventory Management** (low stock alerts, bulk updates)
-- [x] **Coupon System** (percentage/fixed discounts, usage limits)
+### 📊 Seller Dashboard
+- Seller registration and profile management
+- Product CRUD with image upload via Cloudinary
+- Order management for seller's products
+- Sales analytics and revenue tracking
+
+### ⚙️ Admin Dashboard
+- Platform-wide statistics (total users, orders, revenue)
+- User management and role assignment
+- Product moderation
+- Order management with status updates
+- Coupon/discount code management
+- Admin settings panel
+
+### 🎨 UI/UX & Performance
+- Fully responsive (mobile, tablet, desktop)
+- Dark/light theme with smooth transitions
+- Page transitions and micro-animations (Framer Motion)
+- Scroll progress indicator
+- Glassmorphism and modern design aesthetics
+- Optimistic UI updates via React Query cache
+- Skeleton loading states throughout
 
 ---
 
@@ -186,144 +147,79 @@ Stripe Test Card: 4242 4242 4242 4242 | Exp: 12/34 | CVC: 123
 
 ```mermaid
 graph TB
-    subgraph Client["☁️ Vercel Edge Network"]
-        NextJS["Next.js 15 App<br/>(SSR/SSG/ISR)"]
-        RSC["React Server<br/>Components"]
+    subgraph Client["☁️ Vercel"]
+        NextJS["Next.js 16 App<br/>(SSR/SSG/ISR)"]
     end
     
-    subgraph API["🚂 Railway API Server"]
-        Express["Express.js"]
-        MW["Middleware Layer<br/>(Auth, Validate, Rate Limit)"]
+    subgraph API["🚀 Render"]
+        Express["Express.js API"]
+        MW["Middleware<br/>(Auth, Validate, CORS)"]
         Controllers["Controllers"]
-        Services["Services + Cache Logic"]
-        Repos["Repositories<br/>(Drizzle ORM)"]
+        Services["Service Layer"]
     end
     
     subgraph Data["💾 Data Layer"]
         DB[("🐘 Neon Postgres<br/>(Serverless)")]
-        Redis[("⚡ Upstash Redis<br/>(Cache + Queue)")]
-        CDN["☁️ Cloudinary CDN<br/>(Images)"]
+        CDN["☁️ Cloudinary<br/>(Images)"]
     end
     
     subgraph External["🌍 External Services"]
-        Stripe["💳 Stripe API<br/>(Payments + Webhooks)"]
-        Resend["📧 Resend<br/>(Transactional Email)"]
-        Sentry["🐛 Sentry<br/>(Error Tracking)"]
+        Stripe["💳 Stripe<br/>(Payments + Webhooks)"]
+        Gmail["📧 Gmail SMTP<br/>(OTP + Order Emails)"]
+        Google["🔑 Google OAuth"]
     end
     
     NextJS --> MW
-    RSC --> Repos
     MW --> Controllers
     Controllers --> Services
-    Services --> Redis
-    Services --> Repos
-    Repos --> DB
+    Services --> DB
     Services --> Stripe
-    Services --> Resend
-    NextJS --> Sentry
-    Express --> Sentry
+    Services --> Gmail
     NextJS --> CDN
+    NextJS --> Google
 ```
 
-### Database Schema (16 Tables)
-
-<details>
-<summary><b>📋 Click to view full schema</b></summary>
-
-**Core Tables:**
-- `users` — Authentication, roles, created_at
-- `products` — Name, slug, price, stock, category_id, seller_id
-- `categories` — Hierarchical with parent_id
-- `product_images` — Cloudinary URLs with public_id
-- `product_reviews` — Rating 1-5, comment, user_id
-
-**E-Commerce Tables:**
-- `cart_items` — User + product + quantity
-- `wishlists` — User + product (unique constraint)
-- `orders` — Stripe payment_intent_id, status, total
-- `order_items` — Snapshot of price_at_purchase (not live product price)
-- `addresses` — Reusable shipping addresses with is_default flag
-
-**Admin/Seller Tables:**
-- `coupons` — Code, discount_pct, max_uses, expires_at
-- `inventory_alerts` — Low stock notifications
-
-**All tables have:** `id` (UUID), `created_at`, `updated_at`, proper indexes on foreign keys and query columns.
-
-</details>
-
-### Folder Structure
+### Monorepo Structure
 
 ```
 techvault/
 ├── apps/
-│   ├── web/                    # Next.js Frontend
+│   ├── web/                    # Next.js 16 Frontend
 │   │   ├── app/
-│   │   │   ├── (auth)/         # login, register, reset-password
-│   │   │   ├── (shop)/         # products, [slug], cart, checkout
-│   │   │   ├── admin/          # protected admin dashboard
-│   │   │   ├── seller/         # seller dashboard
-│   │   │   └── api/            # Next.js API routes (auth, webhooks)
+│   │   │   ├── (auth)/         # Login, Register, OTP Verification
+│   │   │   ├── (shop)/         # Products, Categories, Cart, Checkout
+│   │   │   ├── (dashboard)/    # Admin & Seller Dashboards
+│   │   │   └── layout.tsx      # Root layout with providers
 │   │   ├── components/
-│   │   │   ├── ui/             # shadcn/ui base
+│   │   │   ├── ui/             # Shadcn/UI base components
 │   │   │   ├── product/        # ProductCard, Gallery, Reviews
-│   │   │   ├── cart/           # CartSidebar, FlyAnimation
-│   │   │   └── animations/     # Hero, PageTransition
+│   │   │   ├── cart/           # CartSidebar, CartItem
+│   │   │   ├── auth/           # GoogleLoginBtn, AuthSync, OTP
+│   │   │   ├── admin/          # AdminProductsTable, OrdersTable
+│   │   │   └── seller/         # SellerDashboard, ProductForm
 │   │   └── lib/
-│   │       ├── stores/         # Zustand: cart, wishlist
-│   │       ├── hooks/          # useCart, useInfiniteProducts
-│   │       └── validations/    # Zod schemas
-│   └── api/                    # Express Backend
+│   │       ├── stores/         # Zustand: auth-store, cart-store, wishlist
+│   │       ├── api.ts          # Typed fetch wrapper with auth headers
+│   │       └── utils.ts        # Shared utilities
+│   └── api/                    # Express.js Backend
 │       └── src/
-│           ├── controllers/    # Request handlers
-│           ├── services/       # Business logic + cache
-│           ├── repositories/   # Drizzle queries
-│           ├── middleware/     # auth, validate, rateLimit
-│           └── __tests__/      # Vitest + Supertest
+│           ├── modules/
+│           │   ├── auth/       # Register, Login, OTP, Google OAuth, JWT
+│           │   ├── products/   # CRUD, search, filtering, reviews
+│           │   ├── cart/       # Add, update, remove items
+│           │   ├── orders/     # Order management, status tracking
+│           │   ├── checkout/   # Stripe sessions, webhooks
+│           │   └── users/      # Profile management, settings
+│           ├── config/         # env.ts, stripe.ts, db.ts
+│           └── middleware/     # auth, validate, error handler
 ├── packages/
-│   ├── db/                     # Drizzle schema + migrations
-│   ├── types/                  # Shared TypeScript types
-│   └── config/                 # ESLint, tsconfig base
-└── .github/workflows/          # CI/CD pipelines
+│   ├── db/                     # Drizzle schema, migrations, seed
+│   ├── types/                  # Shared TypeScript interfaces
+│   └── typescript-config/      # Base tsconfig presets
+├── render.yaml                 # Render deployment config
+├── turbo.json                  # Turborepo build pipeline
+└── DEPLOYMENT.md               # Full deployment guide
 ```
-
----
-
-## 📈 Performance Metrics
-
-### Lighthouse Scores (Production)
-
-| Metric | Score | Details |
-|--------|-------|---------|
-| **Performance** | 96 | First Contentful Paint: 1.2s |
-| **Accessibility** | 100 | WCAG 2.1 AA compliant |
-| **Best Practices** | 100 | HTTPS, no console errors |
-| **SEO** | 100 | Meta tags, sitemap, structured data |
-
-### Core Web Vitals
-
-- **LCP** (Largest Contentful Paint): 1.8s ✅
-- **FID** (First Input Delay): 42ms ✅
-- **CLS** (Cumulative Layout Shift): 0.02 ✅
-
-### Bundle Size (Production Build)
-
-```
-Route                          Size      First Load JS
-────────────────────────────────────────────────────────
-○ /                            143 kB         183 kB
-○ /products                    89 kB          129 kB
-○ /products/[slug]             67 kB          107 kB
-○ /cart                        52 kB          92 kB
-○ /checkout                    78 kB          118 kB
-+ First Load JS shared         40 kB
-```
-
-### Database Performance
-
-- **Redis Cache Hit Rate**: 64% (product listings)
-- **Average API Response**: 180ms (with cache), 420ms (cache miss)
-- **Database Connections**: Pooled (max 20, min 5)
 
 ---
 
@@ -331,618 +227,168 @@ Route                          Size      First Load JS
 
 ### Prerequisites
 
-- **Node.js**: v20.0.0 or higher
-- **PostgreSQL**: v14+ (or Neon/Supabase account)
-- **Redis**: Optional for caching (Upstash free tier works)
-- **Stripe Account**: For payment testing
+- **Node.js** v22+ (LTS recommended)
+- **PostgreSQL** (or [Neon](https://neon.tech) free account)
+- **Stripe Account** for payment testing
+- **Google Cloud** project for OAuth
+- **Cloudinary** account for image hosting
 
 ### Quick Start
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/techvault.git
+# 1. Clone the repository
+git clone https://github.com/Jabirmahmud0/techvault.git
 cd techvault
 
 # 2. Install dependencies (Turborepo handles all workspaces)
 npm install
 
 # 3. Set up environment variables
-cp apps/web/.env.example apps/web/.env
 cp apps/api/.env.example apps/api/.env
+# Edit .env with your DATABASE_URL, JWT secrets, API keys, etc.
 
-# 4. Configure database (see Environment Setup below)
+# 4. Push database schema
 npm run db:push -w packages/db
+
+# 5. Seed sample data
 npm run db:seed -w packages/db
 
-# 5. Start development servers
+# 6. Start development servers
 npm run dev
 # Frontend: http://localhost:3000
 # Backend:  http://localhost:4000
 ```
 
-### Environment Setup
+### Environment Variables
 
 <details>
-<summary><b>🔐 Click to view required environment variables</b></summary>
+<summary><b>🔐 Backend (apps/api/.env)</b></summary>
 
-**Frontend (`apps/web/.env`)**
 ```env
-# Database
-DATABASE_URL="postgresql://user:pass@localhost:5432/techvault"
-
-# Auth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="generate-with: openssl rand -base64 32"
-GOOGLE_CLIENT_ID="your-google-oauth-id"
-GOOGLE_CLIENT_SECRET="your-google-oauth-secret"
-
-# API
-NEXT_PUBLIC_API_URL="http://localhost:4000"
-
-# Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
-# Cloudinary
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
-CLOUDINARY_API_KEY="your-api-key"
-CLOUDINARY_API_SECRET="your-api-secret"
-
-# Email
-RESEND_API_KEY="re_..."
-
-# Monitoring
-NEXT_PUBLIC_SENTRY_DSN="https://...@sentry.io/..."
-```
-
-**Backend (`apps/api/.env`)**
-```env
-# Database
-DATABASE_URL="postgresql://user:pass@localhost:5432/techvault"
-
-# Server
 PORT=4000
-NODE_ENV="development"
-FRONTEND_URL="http://localhost:3000"
+NODE_ENV=development
+DATABASE_URL=postgresql://user:pass@host/dbname
 
 # JWT
-JWT_SECRET="generate-with: openssl rand -base64 32"
-JWT_EXPIRES_IN="15m"
-REFRESH_TOKEN_EXPIRES_IN="7d"
+JWT_SECRET=your-32-char-secret
+JWT_REFRESH_SECRET=your-32-char-refresh-secret
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
 
-# Redis (Upstash)
-REDIS_URL="redis://localhost:6379"
-# or Upstash: rediss://default:password@redis.upstash.io:6379
+# CORS
+FRONTEND_URL=http://localhost:3000
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
-RATE_LIMIT_MAX_REQUESTS=100
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Stripe
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Email
-RESEND_API_KEY="re_..."
-FROM_EMAIL="noreply@techvault.com"
+# SMTP (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@techvault.com
 
-# Sentry
-SENTRY_DSN="https://...@sentry.io/..."
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 </details>
 
-### Database Migrations
+<details>
+<summary><b>🌐 Frontend (Vercel Env Vars)</b></summary>
 
-```bash
-# Generate migration from schema changes
-npm run db:generate -w packages/db
-
-# Apply migrations to database
-npm run db:migrate -w packages/db
-
-# Push schema directly (development only)
-npm run db:push -w packages/db
-
-# Seed database with sample data
-npm run db:seed -w packages/db
+```env
+NEXT_PUBLIC_API_URL=https://your-api-url.onrender.com/api
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
 ```
+
+</details>
 
 ---
 
 ## 🌐 Deployment
 
-### Production Stack
-
 | Service | Purpose | URL |
 |---------|---------|-----|
-| **Vercel** | Frontend hosting | [techvault.vercel.app](https://techvault-demo.vercel.app) |
-| **Railway** | Backend API server | [api.techvault.com](https://techvault-api.railway.app) |
+| **Vercel** | Next.js frontend | [gotechvault.vercel.app](https://gotechvault.vercel.app) |
+| **Render** | Express API server | [techvault-19lu.onrender.com](https://techvault-19lu.onrender.com/api/health) |
 | **Neon** | PostgreSQL database | Serverless, auto-scaling |
-| **Upstash** | Redis cache | Edge-optimized, global |
-| **Cloudflare** | CDN + DNS | SSL, DDoS protection |
+| **Cloudinary** | Image CDN | Upload + transform + deliver |
 
-### Deployment Steps
-
-<details>
-<summary><b>📦 Frontend Deployment (Vercel)</b></summary>
-
-```bash
-# 1. Install Vercel CLI
-npm install -g vercel
-
-# 2. Link project
-vercel link
-
-# 3. Add environment variables in Vercel dashboard
-# (or via CLI: vercel env add)
-
-# 4. Deploy
-vercel --prod
-
-# Auto-deploys on push to main via GitHub integration
-```
-
-**Vercel Configuration** (`apps/web/vercel.json`):
-```json
-{
-  "buildCommand": "cd ../.. && npx turbo run build --filter=web",
-  "outputDirectory": "apps/web/.next",
-  "framework": "nextjs",
-  "regions": ["iad1"],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api-url"
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>🚂 Backend Deployment (Railway)</b></summary>
-
-```bash
-# 1. Install Railway CLI
-npm install -g @railway/cli
-
-# 2. Login and link project
-railway login
-railway link
-
-# 3. Add environment variables
-railway variables set DATABASE_URL="postgresql://..."
-railway variables set JWT_SECRET="..."
-# ... (add all backend env vars)
-
-# 4. Deploy
-railway up
-
-# Auto-deploys on push to main via GitHub integration
-```
-
-**Railway Configuration** (`apps/api/railway.json`):
-```json
-{
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "cd ../.. && npx turbo run build --filter=api"
-  },
-  "deploy": {
-    "startCommand": "node apps/api/dist/index.js",
-    "healthcheckPath": "/health",
-    "restartPolicyType": "ON_FAILURE"
-  }
-}
-```
-
-**Keep Backend Warm** (avoid cold starts):
-```bash
-# Use cron-job.org or UptimeRobot to ping every 10 minutes
-GET https://techvault-api.railway.app/health
-```
-
-</details>
-
-<details>
-<summary><b>🐘 Database Setup (Neon)</b></summary>
-
-1. Create account at [neon.tech](https://neon.tech)
-2. Create new project (select region nearest your users)
-3. Copy connection string to `DATABASE_URL`
-4. Run migrations: `npm run db:migrate -w packages/db`
-
-**Neon Benefits:**
-- Serverless (auto-scales to zero)
-- Branching for dev/staging/prod
-- Point-in-time recovery
-- Free tier: 0.5GB storage, 100 hours compute/month
-
-</details>
-
-### CI/CD Pipeline
-
-**GitHub Actions** (`.github/workflows/ci.yml`):
-```yaml
-name: CI/CD
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - run: npm run lint
-      - run: npm run test
-      - run: npm run build
-      
-  deploy:
-    needs: lint-and-test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Vercel
-        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy to Railway
-        run: railway up --service api
-```
+For detailed deployment instructions, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 ---
 
-## 🧪 Testing
-
-### Test Coverage: 78%
-
-```bash
-# Run all tests
-npm run test
-
-# Frontend unit tests
-npm run test -w apps/web
-
-# Backend unit tests  
-npm run test -w apps/api
-
-# Integration tests
-npm run test:integration
-
-# E2E tests (Playwright)
-npm run test:e2e
-
-# Coverage report
-npm run test:coverage
-```
-
-### Test Structure
-
-**Frontend Tests** (`apps/web/__tests__/`)
-- `components/product/ProductCard.test.tsx` — render, interactions
-- `lib/stores/cart-store.test.ts` — state management logic
-- `lib/hooks/useCart.test.ts` — hook behavior
-
-**Backend Tests** (`apps/api/src/__tests__/`)
-- `modules/auth/sanitize.test.ts` — XSS prevention
-- `modules/products/service.test.ts` — business logic
-- `modules/orders/integration.test.ts` — full order flow
-
-**E2E Tests** (`e2e/`)
-- `checkout-flow.spec.ts` — cart → checkout → payment → order
-- `auth-flow.spec.ts` — login → protected routes → logout
-- `admin-flow.spec.ts` — product CRUD, user management
-
----
-
-## 📚 API Documentation
+## 📚 API Endpoints
 
 ### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/register` | Register with email + OTP |
+| `POST` | `/api/auth/verify-otp` | Verify email OTP code |
+| `POST` | `/api/auth/login` | Login with credentials |
+| `POST` | `/api/auth/google` | Google OAuth login |
+| `POST` | `/api/auth/refresh` | Refresh access token |
+| `GET` | `/api/auth/me` | Get current user |
 
-All authenticated endpoints require JWT token in `Authorization` header:
-```
-Authorization: Bearer <access_token>
-```
+### Products
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/products` | List products (search, filter, paginate) |
+| `GET` | `/api/products/:slug` | Get product details |
+| `POST` | `/api/products` | Create product (Seller/Admin) |
+| `PUT` | `/api/products/:id` | Update product (Seller/Admin) |
+| `DELETE` | `/api/products/:id` | Delete product (Seller/Admin) |
 
-Access tokens expire in 15 minutes. Use refresh token to get new access token:
-```bash
-POST /api/auth/refresh
-Cookie: refresh_token=<refresh_token>
-```
+### Cart & Checkout
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/cart` | Get user's cart |
+| `POST` | `/api/cart` | Add item to cart |
+| `PUT` | `/api/cart/:id` | Update cart item quantity |
+| `DELETE` | `/api/cart/:id` | Remove cart item |
+| `POST` | `/api/checkout/create-session` | Create Stripe checkout session |
 
-### Endpoints
+### Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/orders` | Get user's order history |
+| `GET` | `/api/orders/:id` | Get order details |
+| `PATCH` | `/api/orders/:id/status` | Update order status (Seller/Admin) |
 
-<details>
-<summary><b>🔐 Auth Endpoints</b></summary>
-
-**Register**
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-
-Response: 201 Created
-{
-  "user": { "id": "...", "email": "...", "role": "USER" },
-  "accessToken": "eyJ...",
-  "refreshToken": "eyJ..." 
-}
-```
-
-**Login**
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "SecurePass123!"
-}
-
-Response: 200 OK + httpOnly cookie
-{
-  "user": { ... },
-  "accessToken": "eyJ..."
-}
-```
-
-**Logout**
-```http
-POST /api/auth/logout
-Authorization: Bearer <token>
-
-Response: 200 OK
-```
-
-</details>
-
-<details>
-<summary><b>🛍️ Product Endpoints</b></summary>
-
-**List Products**
-```http
-GET /api/products?page=1&limit=20&category=smartphones&minPrice=100&maxPrice=1000&sort=price_asc
-
-Response: 200 OK
-{
-  "products": [...],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 156,
-    "totalPages": 8
-  }
-}
-```
-
-**Get Product**
-```http
-GET /api/products/:slug
-
-Response: 200 OK
-{
-  "id": "...",
-  "name": "iPhone 15 Pro",
-  "slug": "iphone-15-pro",
-  "price": 999,
-  "stock": 42,
-  "images": [...],
-  "reviews": [...],
-  "seller": { ... }
-}
-```
-
-**Create Product** (Seller/Admin only)
-```http
-POST /api/products
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "Product Name",
-  "description": "...",
-  "price": 499,
-  "stock": 100,
-  "category_id": "...",
-  "images": [...]
-}
-
-Response: 201 Created
-```
-
-</details>
-
-<details>
-<summary><b>🛒 Cart & Orders</b></summary>
-
-**Add to Cart**
-```http
-POST /api/cart
-Authorization: Bearer <token>
-
-{
-  "product_id": "...",
-  "quantity": 2
-}
-
-Response: 200 OK
-```
-
-**Checkout**
-```http
-POST /api/orders/checkout
-Authorization: Bearer <token>
-
-{
-  "items": [...],
-  "address_id": "...",
-  "coupon_code": "SAVE10"
-}
-
-Response: 200 OK
-{
-  "order_id": "...",
-  "stripe_client_secret": "pi_..._secret_...",
-  "total": 998.00
-}
-```
-
-**Order History**
-```http
-GET /api/orders
-Authorization: Bearer <token>
-
-Response: 200 OK
-{
-  "orders": [
-    {
-      "id": "...",
-      "created_at": "2024-01-15T...",
-      "status": "DELIVERED",
-      "total": 998.00,
-      "items": [...]
-    }
-  ]
-}
-```
-
-</details>
-
-<details>
-<summary><b>⚙️ Admin Endpoints</b></summary>
-
-**Analytics**
-```http
-GET /api/admin/analytics?period=30d
-Authorization: Bearer <admin_token>
-
-Response: 200 OK
-{
-  "revenue": {
-    "total": 125400.00,
-    "byCategory": {...}
-  },
-  "orders": {
-    "total": 342,
-    "avgOrderValue": 366.67
-  },
-  "topProducts": [...]
-}
-```
-
-**Manage Users**
-```http
-PATCH /api/admin/users/:id
-Authorization: Bearer <admin_token>
-
-{
-  "role": "SELLER",
-  "status": "ACTIVE"
-}
-
-Response: 200 OK
-```
-
-</details>
-
-**Full API documentation**: [Postman Collection](https://documenter.getpostman.com/view/placeholder/TechVault)
+### Reviews
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/products/:id/reviews` | Get product reviews |
+| `POST` | `/api/products/:id/reviews` | Submit a review |
 
 ---
 
-## 🗺️ Roadmap
+## 👤 Author
 
-### ✅ Completed
-- [x] Core e-commerce features (products, cart, checkout)
-- [x] Stripe payment integration with webhooks
-- [x] Multi-role authentication (Admin, Seller, User)
-- [x] Redis caching layer
-- [x] Admin dashboard with analytics
-- [x] Email notifications (Resend)
-- [x] Image upload (Cloudinary)
-- [x] Comprehensive testing (78% coverage)
-- [x] Production deployment (Vercel + Railway)
+<div align="center">
 
-### 🚧 In Progress
-- [ ] **Seller Onboarding Flow** (KYC, stripe connect)
-- [ ] **Product Recommendations** (AI-powered based on browsing history)
-- [ ] **Advanced Search** (Algolia or Meilisearch integration)
+**Built by [Jabir Mahmud](https://jabirr.vercel.app/)**
 
-### 📋 Planned Features
-- [ ] **Real-time Inventory Updates** (Socket.io for stock changes)
-- [ ] **Multi-currency Support** (Stripe multi-currency)
-- [ ] **Internationalization** (i18n with next-intl)
-- [ ] **Gift Cards & Store Credit**
-- [ ] **Subscription Products** (recurring billing)
-- [ ] **Mobile App** (React Native with shared API)
-- [ ] **Advanced Analytics** (Google Analytics 4, custom events)
-- [ ] **A/B Testing Framework** (feature flags, experimentation)
+[![Portfolio](https://img.shields.io/badge/Portfolio-jabirr.vercel.app-00D4AA?style=for-the-badge&logo=vercel)](https://jabirr.vercel.app/)
+[![Email](https://img.shields.io/badge/Email-jaabirmahmud01@gmail.com-EA4335?style=for-the-badge&logo=gmail)](mailto:jaabirmahmud01@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-@Jabirmahmud0-181717?style=for-the-badge&logo=github)](https://github.com/Jabirmahmud0)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Jabir_Mahmud-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/jabirmahmud0/)
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! This project follows standard open-source practices.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`npm run test`)
-5. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
-6. Push to your fork (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Commit Convention
-
-We use [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting, no logic change)
-- `refactor:` Code refactoring
-- `perf:` Performance improvements
-- `test:` Adding or updating tests
-- `chore:` Maintenance tasks
-
-### Code Style
-
-- **ESLint**: `npm run lint`
-- **Prettier**: `npm run format`
-- **TypeScript**: Strict mode, no `any` types
+</div>
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 👤 About
-
-**Built by:** Jabir Mahmud  
-**Portfolio:** [jabirmahmud.dev](https://jabirmahmud.dev)  
-**Email:** jaabirmahmud01@gmail.com  
-**GitHub:** [@jabirmahmud](https://github.com/jabirmahmud)  
-**LinkedIn:** [linkedin.com/in/jabirmahmud](https://linkedin.com/in/jabirmahmud)
-
-### 🙏 Acknowledgments
-
-- [Next.js Team](https://nextjs.org/) for the incredible framework
-- [Vercel](https://vercel.com/) for free hosting and amazing DX
-- [shadcn](https://ui.shadcn.com/) for the beautiful component library
-- [Stripe](https://stripe.com/) for comprehensive payment docs
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -950,8 +396,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### ⭐ Found this helpful? Give it a star!
 
-**Built with ❤️ for the future of e-commerce**
+**Built with ❤️ using Next.js, Express, and TypeScript**
 
-[![Star on GitHub](https://img.shields.io/github/stars/yourusername/techvault?style=social)](https://github.com/yourusername/techvault)
+[![Star on GitHub](https://img.shields.io/github/stars/Jabirmahmud0/techvault?style=social)](https://github.com/Jabirmahmud0/techvault)
 
 </div>
