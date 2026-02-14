@@ -19,6 +19,7 @@
     "node_modules",
     "dist",
     "src/scripts",
-    "src/reset-admin.ts"
+    "src/reset-admin.ts",
+    "**/__tests__"
   ]
 }

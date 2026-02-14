@@ -6,6 +6,5 @@ import { env } from "./env.js";
  * Uses the latest API version for type safety.
  */
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-01-27.acacia",
     typescript: true,
 });

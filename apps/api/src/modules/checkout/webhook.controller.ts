@@ -154,8 +154,8 @@ async function handleCheckoutComplete(session: any) {
         const customerEmail = session.customer_email || session.customer_details?.email;
         if (customerEmail) {
             emailService
-                .sendOrderConfirmation(customerEmail, newOrder.id, totalAmount)
-                .catch((err) => console.error("Email send failed:", err));
+                .sendOrderConfirmationEmail(customerEmail, newOrder.id, Number(totalAmount))
+                .catch((err: unknown) => console.error("Email send failed:", err));
         }
     });
 }

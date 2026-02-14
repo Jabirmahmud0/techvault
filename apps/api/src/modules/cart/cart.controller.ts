@@ -27,7 +27,7 @@ export const cartController = {
         try {
             const data = await cartService.updateItem(
                 req.user!.userId,
-                req.params.id!,
+                req.params.id as string,
                 req.body
             );
             res.status(200).json({ success: true, data });
@@ -39,7 +39,7 @@ export const cartController = {
     /** DELETE /api/cart/:id */
     async removeItem(req: Request, res: Response, next: NextFunction) {
         try {
-            const data = await cartService.removeItem(req.user!.userId, req.params.id!);
+            const data = await cartService.removeItem(req.user!.userId, req.params.id as string);
             res.status(200).json({ success: true, ...data });
         } catch (error) {
             next(error);

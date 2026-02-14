@@ -120,9 +120,9 @@ export const ordersService = {
             .where(and(
                 eq(products.sellerId, sellerId),
                 or(
-                    eq(orders.status, "PAID"),
-                    eq(orders.status, "SHIPPED"),
-                    eq(orders.status, "DELIVERED")
+                    eq(orders.status, "PAID" as any),
+                    eq(orders.status, "SHIPPED" as any),
+                    eq(orders.status, "DELIVERED" as any)
                 )
             ));
 
