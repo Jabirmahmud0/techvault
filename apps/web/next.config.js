@@ -10,9 +10,20 @@ const nextConfig = {
                 protocol: "https",
                 hostname: "res.cloudinary.com",
             },
+            {
+                protocol: "https",
+                hostname: "lh3.googleusercontent.com",
+            },
+            {
+                protocol: "https",
+                hostname: "placehold.co",
+            },
         ],
     },
     async rewrites() {
+        // Only proxy /api in development — in production the frontend
+        // calls the Railway API URL directly via NEXT_PUBLIC_API_URL
+        if (process.env.NODE_ENV === "production") return [];
         return [
             {
                 source: "/api/:path*",

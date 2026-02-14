@@ -17,8 +17,9 @@ export const uploadController = {
             const b64 = Buffer.from(file.buffer).toString("base64");
             const dataURI = "data:" + file.mimetype + ";base64," + b64;
 
+            const folder = (req.query.folder as string) || "products";
             const result = await cloudinary.uploader.upload(dataURI, {
-                folder: "techvault/products",
+                folder: `techvault/${folder}`,
                 resource_type: "auto",
             });
 
@@ -31,6 +32,28 @@ export const uploadController = {
                     width: result.width,
                     height: result.height,
                 },
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /**
+     * Delete an image from Cloudinary
+     */
+    async deleteImage(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { publicId } = req.body;
+
+            if (!publicId) {
+                throw ApiError.badRequest("publicId is required");
+            }
+
+            const result = await cloudinary.uploader.destroy(publicId);
+
+            res.json({
+                success: true,
+                data: result,
             });
         } catch (error) {
             next(error);

@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+import { sql as drizzleSql } from "drizzle-orm";
 import { hash } from "bcrypt";
 import dotenv from "dotenv";
 import * as schema from "./schema.js";
@@ -59,8 +60,21 @@ async function seed() {
     const admin = adminUser ?? await db.query.users.findFirst({ where: eq(schema.users.email, "admin@techvault.com") });
     const testUsr = testUser ?? await db.query.users.findFirst({ where: eq(schema.users.email, "user@techvault.com") });
 
+    const [sellerUser] = await db
+        .insert(schema.users)
+        .values({
+            name: "Seller",
+            email: "seller@techvault.com",
+            passwordHash: await hash("Seller123!", SALT_ROUNDS),
+            role: "SELLER",
+            emailVerified: true,
+        })
+        .onConflictDoNothing()
+        .returning();
+
     console.log(`  ✅ Admin: admin@techvault.com / Admin123!`);
-    console.log(`  ✅ User: user@techvault.com / User1234!\n`);
+    console.log(`  ✅ User: user@techvault.com / User1234!`);
+    console.log(`  ✅ Seller: seller@techvault.com / Seller123!\n`);
 
     // ── 2. Seed Categories ─────────────────────────────────────────────────
     console.log("📂 Creating categories...");
@@ -70,6 +84,7 @@ async function seed() {
         { name: "Tablets", slug: "tablets", description: "Tablets for productivity and entertainment", image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400" },
         { name: "Smartwatches", slug: "smartwatches", description: "Wearable tech and smartwatches", image: "https://images.unsplash.com/photo-1546868871-af0de0ae72be?w=400" },
         { name: "Cameras", slug: "cameras", description: "Digital cameras and photography gear", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400" },
+        { name: "Headphones", slug: "headphones", description: "Premium audio and noise cancelling headphones", image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400" },
     ];
 
     const insertedCategories = await db
@@ -91,6 +106,7 @@ async function seed() {
 
     // ── 3. Seed Products ───────────────────────────────────────────────────
     console.log("📦 Creating products...");
+    // Correctly mapped products to match homepage hardcoding
     const productData = [
         // Smartphones
         {
@@ -107,6 +123,7 @@ async function seed() {
             sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: "6.7-inch Super Retina XDR", chip: "A17 Pro", storage: "256GB", camera: "48MP + 12MP + 12MP", battery: "4441 mAh" }),
+            image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&h=600&fit=crop",
         },
         {
             name: "Samsung Galaxy S24 Ultra",
@@ -122,21 +139,107 @@ async function seed() {
             sellerId: admin!.id,
             isFeatured: true,
             specifications: JSON.stringify({ display: "6.8-inch Dynamic AMOLED 2X", chip: "Snapdragon 8 Gen 3", storage: "256GB", camera: "200MP + 12MP + 50MP + 10MP", battery: "5000 mAh" }),
+            image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&h=600&fit=crop",
+        },
+        // Laptops
+        {
+            name: 'MacBook Pro 16" M3',
+            slug: "macbook-pro-16-m3",
+            description: "The most powerful MacBook Pro ever. M3 Max chip with up to 128GB unified memory, stunning Liquid Retina XDR display, and all-day battery life for pro workflows.",
+            shortDescription: "M3 Max. 128GB unified memory. All-day battery.",
+            price: "2499.99",
+            compareAtPrice: null,
+            stock: 15,
+            sku: "APPL-MBP16-M3",
+            brand: "Apple",
+            categoryId: categoryMap["laptops"]!,
+            sellerId: admin!.id,
+            isFeatured: true,
+            specifications: JSON.stringify({ display: '16.2-inch Liquid Retina XDR', chip: "Apple M3", memory: "18GB", storage: "512GB SSD", battery: "22 hours" }),
+            image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=600&fit=crop",
         },
         {
-            name: "Google Pixel 9 Pro",
-            slug: "google-pixel-9-pro",
-            description: "The best of Google AI in a beautifully designed phone. Tensor G4 chip, incredible camera system, and 7 years of OS updates.",
-            shortDescription: "Google AI. Tensor G4. Pro camera.",
-            price: "999.99",
-            stock: 52,
-            sku: "GOOG-PX9P-128",
-            brand: "Google",
-            categoryId: categoryMap["smartphones"]!,
+            name: "Dell XPS 15 OLED",
+            slug: "dell-xps-15-oled",
+            description: "A stunning 15.6-inch InfinityEdge display with Intel Core Ultra processors. Precision-crafted with premium materials for the ultimate productivity machine.",
+            shortDescription: "InfinityEdge display. Intel Core Ultra.",
+            price: "1799.99",
+            stock: 28,
+            sku: "DELL-XPS15-OLED",
+            brand: "Dell",
+            categoryId: categoryMap["laptops"]!,
             sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ display: "6.3-inch LTPO OLED", chip: "Tensor G4", storage: "128GB", camera: "50MP + 48MP + 48MP", battery: "4700 mAh" }),
+            isFeatured: true,
+            specifications: JSON.stringify({ display: '15.6-inch OLED 3.5K', processor: "Intel Core Ultra 9", memory: "32GB DDR5", storage: "1TB SSD", battery: "13 hours" }),
+            image: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&h=600&fit=crop",
         },
+        // Audio / Headphones
+        {
+            name: "Sony WH-1000XM5",
+            slug: "sony-wh-1000xm5",
+            description: "The best noise-canceling headphones on the market. Industry-leading noise cancellation, exceptional sound quality, and crystal-clear hands-free calling.",
+            shortDescription: "Noise cancelling. 30hr battery. LDAC.",
+            price: "349.99",
+            compareAtPrice: "399.99",
+            stock: 50,
+            sku: "SONY-XM5",
+            brand: "Sony",
+            categoryId: categoryMap["headphones"]!,
+            sellerId: admin!.id,
+            isFeatured: true,
+            specifications: JSON.stringify({ type: "Over-ear", battery: "30 hours", connectivity: "Bluetooth 5.2", weight: "250g" }),
+            image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&h=600&fit=crop",
+        },
+        // Tablets
+        {
+            name: 'iPad Pro 12.9" M2',
+            slug: "ipad-pro-12-9-m2",
+            description: "The ultimate iPad experience. M2 chip, XDR display, and superfast wireless connectivity.",
+            shortDescription: "M2 chip. XDR display. Pro cameras.",
+            price: "1099.99",
+            stock: 30,
+            sku: "APPL-IPADP129-M2",
+            brand: "Apple",
+            categoryId: categoryMap["tablets"]!,
+            sellerId: admin!.id,
+            isFeatured: true,
+            specifications: JSON.stringify({ display: '12.9-inch Liquid Retina XDR', chip: "Apple M2", storage: "128GB", connectivity: "Wi-Fi 6E", weight: "682 g" }),
+            image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=600&fit=crop",
+        },
+        // Cameras
+        {
+            name: "Canon EOS R6 Mark II",
+            slug: "canon-eos-r6-mark-ii",
+            description: "Full-frame mirrorless camera for hybrid shooters. 24.2MP sensor, 40fps continuous shooting, and 4K 60p video.",
+            shortDescription: "24.2MP. 40fps. 4K 60p.",
+            price: "2499.99",
+            stock: 12,
+            sku: "CAN-R6MII",
+            brand: "Canon",
+            categoryId: categoryMap["cameras"]!,
+            sellerId: admin!.id,
+            isFeatured: true,
+            specifications: JSON.stringify({ sensor: "24.2MP CMOS", fps: "40 fps", video: "4K 60p", stabilization: "In-body 5-axis" }),
+            image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=600&fit=crop",
+        },
+        // Smartwatches
+        {
+            name: "Apple Watch Ultra 2",
+            slug: "apple-watch-ultra-2",
+            description: "The most rugged and capable Apple Watch ever. Titanium case, precision dual-frequency GPS, up to 36 hours battery life, and depth gauge for diving.",
+            shortDescription: "Titanium. 36hr battery. Precision GPS.",
+            price: "799.99",
+            compareAtPrice: "899.99",
+            stock: 40,
+            sku: "APPL-AWU2-49",
+            brand: "Apple",
+            categoryId: categoryMap["smartwatches"]!,
+            sellerId: admin!.id,
+            isFeatured: true,
+            specifications: JSON.stringify({ display: "49mm Always-On Retina", chip: "S9 SiP", battery: "36 hours", waterResistance: "100m", gps: "Dual-frequency L1/L5" }),
+            image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600&h=600&fit=crop",
+        },
+        // Other items for variety (retaining some original seed data)
         {
             name: "OnePlus 12",
             slug: "oneplus-12",
@@ -150,80 +253,7 @@ async function seed() {
             sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: "6.82-inch LTPO AMOLED", chip: "Snapdragon 8 Gen 3", storage: "256GB", camera: "50MP + 48MP + 64MP", battery: "5400 mAh" }),
-        },
-        // Laptops
-        {
-            name: 'MacBook Pro 16" M3 Max',
-            slug: "macbook-pro-16-m3-max",
-            description: "The most powerful MacBook Pro ever. M3 Max chip with up to 128GB unified memory, stunning Liquid Retina XDR display, and all-day battery life for pro workflows.",
-            shortDescription: "M3 Max. 128GB unified memory. All-day battery.",
-            price: "3499.99",
-            compareAtPrice: "3699.99",
-            stock: 15,
-            sku: "APPL-MBP16-M3M",
-            brand: "Apple",
-            categoryId: categoryMap["laptops"]!,
-            sellerId: admin!.id,
-            isFeatured: true,
-            specifications: JSON.stringify({ display: '16.2-inch Liquid Retina XDR', chip: "Apple M3 Max", memory: "36GB", storage: "1TB SSD", battery: "22 hours" }),
-        },
-        {
-            name: "Dell XPS 15",
-            slug: "dell-xps-15",
-            description: "A stunning 15.6-inch InfinityEdge display with Intel Core Ultra processors. Precision-crafted with premium materials for the ultimate productivity machine.",
-            shortDescription: "InfinityEdge display. Intel Core Ultra.",
-            price: "1899.99",
-            stock: 28,
-            sku: "DELL-XPS15-512",
-            brand: "Dell",
-            categoryId: categoryMap["laptops"]!,
-            sellerId: admin!.id,
-            isFeatured: true,
-            specifications: JSON.stringify({ display: '15.6-inch OLED 3.5K', processor: "Intel Core Ultra 9", memory: "32GB DDR5", storage: "512GB SSD", battery: "13 hours" }),
-        },
-        {
-            name: "ASUS ROG Strix G16",
-            slug: "asus-rog-strix-g16",
-            description: "Built for gaming dominance. RTX 4070 graphics, Intel Core i9 processor, 240Hz refresh rate display, and advanced cooling for sustained performance.",
-            shortDescription: "RTX 4070. 240Hz display. Gaming powerhouse.",
-            price: "1699.99",
-            compareAtPrice: "1899.99",
-            stock: 22,
-            sku: "ASUS-ROGG16",
-            brand: "ASUS",
-            categoryId: categoryMap["laptops"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ display: '16-inch IPS 240Hz', processor: "Intel Core i9-14900HX", gpu: "NVIDIA RTX 4070", memory: "16GB DDR5", storage: "1TB SSD" }),
-        },
-        {
-            name: "ThinkPad X1 Carbon Gen 12",
-            slug: "thinkpad-x1-carbon-gen12",
-            description: "The legendary ThinkPad reimagined. Ultra-light carbon fiber chassis, Intel Core Ultra vPro, and the best keyboard in the business.",
-            shortDescription: "Ultra-light. vPro security. Best-in-class keyboard.",
-            price: "1649.99",
-            stock: 35,
-            sku: "LEN-X1C-G12",
-            brand: "Lenovo",
-            categoryId: categoryMap["laptops"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ display: '14-inch 2.8K OLED', processor: "Intel Core Ultra 7 vPro", memory: "32GB LPDDR5x", storage: "512GB SSD", weight: "1.09 kg" }),
-        },
-        // Tablets
-        {
-            name: 'iPad Pro 13" M4',
-            slug: "ipad-pro-13-m4",
-            description: "The thinnest, most powerful iPad ever. M4 chip, tandem OLED Ultra Retina XDR display, and the new Apple Pencil Pro for creative professionals.",
-            shortDescription: "M4 chip. Tandem OLED. Apple Pencil Pro.",
-            price: "1299.99",
-            stock: 30,
-            sku: "APPL-IPADP13-M4",
-            brand: "Apple",
-            categoryId: categoryMap["tablets"]!,
-            sellerId: admin!.id,
-            isFeatured: true,
-            specifications: JSON.stringify({ display: '13-inch Ultra Retina XDR', chip: "Apple M4", storage: "256GB", connectivity: "Wi-Fi 6E", weight: "579 g" }),
+            image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&h=600&fit=crop",
         },
         {
             name: "Samsung Galaxy Tab S9 Ultra",
@@ -238,52 +268,8 @@ async function seed() {
             sellerId: admin!.id,
             isFeatured: false,
             specifications: JSON.stringify({ display: '14.6-inch Dynamic AMOLED 2X', chip: "Snapdragon 8 Gen 2", storage: "256GB", battery: "11200 mAh", spen: "Included" }),
+            image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=600&fit=crop",
         },
-        // Smartwatches
-        {
-            name: "Apple Watch Ultra 2",
-            slug: "apple-watch-ultra-2",
-            description: "The most rugged and capable Apple Watch ever. Titanium case, precision dual-frequency GPS, up to 36 hours battery life, and depth gauge for diving.",
-            shortDescription: "Titanium. 36hr battery. Precision GPS.",
-            price: "799.99",
-            stock: 40,
-            sku: "APPL-AWU2-49",
-            brand: "Apple",
-            categoryId: categoryMap["smartwatches"]!,
-            sellerId: admin!.id,
-            isFeatured: true,
-            specifications: JSON.stringify({ display: "49mm Always-On Retina", chip: "S9 SiP", battery: "36 hours", waterResistance: "100m", gps: "Dual-frequency L1/L5" }),
-        },
-        {
-            name: "Samsung Galaxy Watch 6 Classic",
-            slug: "samsung-galaxy-watch-6-classic",
-            description: "Classic design meets cutting-edge tech. Rotating bezel, sapphire crystal display, advanced health monitoring with BioActive Sensor.",
-            shortDescription: "Rotating bezel. Sapphire crystal. Health tracking.",
-            price: "399.99",
-            compareAtPrice: "449.99",
-            stock: 55,
-            sku: "SAM-GW6C-47",
-            brand: "Samsung",
-            categoryId: categoryMap["smartwatches"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ display: "47mm Super AMOLED", chip: "Exynos W930", battery: "425 mAh", waterResistance: "5ATM+IP68", os: "Wear OS 4" }),
-        },
-        {
-            name: "Garmin Fenix 7X Pro",
-            slug: "garmin-fenix-7x-pro",
-            description: "The ultimate adventure smartwatch. Solar charging, multi-band GPS, built-in flashlight, and over 30 built-in sport apps for athletes and explorers.",
-            shortDescription: "Solar charging. Multi-band GPS. Built-in flashlight.",
-            price: "899.99",
-            stock: 18,
-            sku: "GAR-F7XP-51",
-            brand: "Garmin",
-            categoryId: categoryMap["smartwatches"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ display: "51mm MIP", battery: "Up to 37 days", gps: "Multi-band GNSS", waterResistance: "10ATM", solar: "Power Glass" }),
-        },
-        // Cameras
         {
             name: "Sony A7R V",
             slug: "sony-a7r-v",
@@ -295,75 +281,73 @@ async function seed() {
             brand: "Sony",
             categoryId: categoryMap["cameras"]!,
             sellerId: admin!.id,
-            isFeatured: true,
+            isFeatured: false,
             specifications: JSON.stringify({ sensor: "61MP Full-Frame Exmor R", autofocus: "759-point AI AF", video: "8K 24p / 4K 120p", stabilization: "8-stop IBIS", evf: "9.44M-dot OLED" }),
-        },
-        {
-            name: "Canon EOS R5 Mark II",
-            slug: "canon-eos-r5-mark-ii",
-            description: "45MP full-frame mirrorless powerhouse with Dual Pixel CMOS AF II, 8K raw video, and professional-grade build quality.",
-            shortDescription: "45MP. Dual Pixel AF II. 8K RAW.",
-            price: "4299.99",
-            stock: 8,
-            sku: "CAN-R5MII",
-            brand: "Canon",
-            categoryId: categoryMap["cameras"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ sensor: "45MP Full-Frame CMOS", autofocus: "Dual Pixel CMOS AF II", video: "8K RAW 30p / 4K 120p", stabilization: "8.5-stop IBIS", evf: "5.76M-dot OLED" }),
-        },
-        {
-            name: "Fujifilm X-T5",
-            slug: "fujifilm-x-t5",
-            description: "40MP APS-C mirrorless with legendary Fuji color science, retro design, and 7-stop IBIS. The photographer's camera.",
-            shortDescription: "40MP. Fuji colors. Retro design.",
-            price: "1699.99",
-            stock: 20,
-            sku: "FUJI-XT5",
-            brand: "Fujifilm",
-            categoryId: categoryMap["cameras"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ sensor: "40MP APS-C X-Trans CMOS 5 HR", autofocus: "425-point hybrid AF", video: "6.2K 30p / 4K 60p", stabilization: "7-stop IBIS", filmSimulations: "19 modes" }),
-        },
-        {
-            name: "Nikon Z8",
-            slug: "nikon-z8",
-            description: "45.7MP full-frame mirrorless in a compact body. Borrowed tech from the flagship Z9 with 8K video, subject detection AF, and zero blackout EVF.",
-            shortDescription: "45.7MP. Z9 tech. Compact body.",
-            price: "3999.99",
-            stock: 10,
-            sku: "NIK-Z8",
-            brand: "Nikon",
-            categoryId: categoryMap["cameras"]!,
-            sellerId: admin!.id,
-            isFeatured: false,
-            specifications: JSON.stringify({ sensor: "45.7MP Full-Frame Stacked CMOS", autofocus: "Subject Detection AF", video: "8K 30p / 4K 120p", stabilization: "6-stop IBIS", evf: "3.69M-dot" }),
+            image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=600&fit=crop",
         },
     ];
 
     const insertedProducts = await db
         .insert(schema.products)
-        .values(productData)
-        .onConflictDoNothing()
+        .values(productData.map(({ image, ...p }) => p))
+        .onConflictDoUpdate({
+            target: schema.products.slug,
+            set: {
+                name: drizzleSql`excluded.name`,
+                description: drizzleSql`excluded.description`,
+                price: drizzleSql`excluded.price`,
+                stock: drizzleSql`excluded.stock`,
+                categoryId: drizzleSql`excluded.category_id`,
+                compareAtPrice: drizzleSql`excluded.compare_at_price`,
+                sku: drizzleSql`excluded.sku`,
+                specifications: drizzleSql`excluded.specifications`,
+                isFeatured: drizzleSql`excluded.is_featured`,
+            }
+        })
         .returning();
 
     console.log(`  ✅ Created ${insertedProducts.length} products\n`);
 
     // ── 4. Seed Product Images ─────────────────────────────────────────────
     console.log("🖼️  Creating product images...");
-    const imageData = insertedProducts.map((product) => ({
-        productId: product.id,
-        url: `https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80`,
-        altText: product.name,
-        isPrimary: true,
-        sortOrder: 0,
-    }));
+
+    // Create a map of slug -> image URL from the input data
+    const productImageMap = new Map(productData.map(p => [p.slug, p.image]));
+
+    const imageData = insertedProducts.map((product) => {
+        const imageUrl = productImageMap.get(product.slug) || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80"; // Fallback
+
+        return {
+            productId: product.id,
+            url: imageUrl,
+            altText: product.name,
+            isPrimary: true,
+            sortOrder: 0,
+        };
+    });
 
     if (imageData.length > 0) {
-        await db.insert(schema.productImages).values(imageData).onConflictDoNothing();
+        // Upsert images based on productId and url (or just insert and ignore conflicts?)
+        // product_images table might not have unique constraint on (productId, url) or (productId, isPrimary).
+        // Let's assume onConflictDoNothing is safe enough to avoid duplicates if re-running.
+        // Actually, if we re-run, we might want to update the URL if it changed?
+        // But here we are inserting new ones.
+        // Let's use onConflictDoNothing for now.
+        // Wait, if I updated the products, I should probably ensure the images are correct.
+        // If I originally seeded with the placeholder, the placeholder row exists.
+        // If I insert the NEW url, it will be a NEW row (since URL is different).
+        // So a product will have 2 images: placeholder and real one.
+        // Both might be isPrimary=true? That would be bad.
+        // Best approach: Delete existing images for these products and re-insert.
+
+        const productIds = insertedProducts.map(p => p.id);
+        const { inArray } = await import("drizzle-orm");
+        await db.delete(schema.productImages)
+            .where(inArray(schema.productImages.productId, productIds));
+
+        await db.insert(schema.productImages).values(imageData);
     }
-    console.log(`  ✅ Created ${imageData.length} product images\n`);
+    console.log(`  ✅ Created/Updated ${imageData.length} product images\n`);
 
     // ── 5. Seed Coupons ────────────────────────────────────────────────────
     console.log("🎟️  Creating coupons...");

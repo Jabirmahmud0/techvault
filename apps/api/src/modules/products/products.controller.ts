@@ -63,10 +63,12 @@ export const productsController = {
     },
 
     /** PUT /api/products/:id (Admin/Seller only) */
+    /** PUT /api/products/:id (Admin/Seller only) */
     async update(req: Request, res: Response, next: NextFunction) {
         try {
             const id = req.params.id as string;
-            const data = await productsService.update(id, req.body);
+            // Pass user info for ownership check
+            const data = await productsService.update(id, req.body, req.user?.userId, req.user?.role);
             await CacheService.invalidatePattern("products:*");
             res.status(200).json({ success: true, data });
         } catch (error) {
@@ -86,10 +88,12 @@ export const productsController = {
     },
 
     /** DELETE /api/products/:id (Admin/Seller only) */
+    /** DELETE /api/products/:id (Admin/Seller only) */
     async delete(req: Request, res: Response, next: NextFunction) {
         try {
             const id = req.params.id as string;
-            await productsService.delete(id);
+            // Pass user info for ownership check
+            await productsService.delete(id, req.user?.userId, req.user?.role);
             await CacheService.invalidatePattern("products:*");
             res.status(200).json({ success: true, message: "Product deleted successfully" });
         } catch (error) {

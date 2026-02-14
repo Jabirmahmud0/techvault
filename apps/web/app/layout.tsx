@@ -5,6 +5,8 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
+import { ScrollProgress } from "@/components/animations/scroll-progress";
+import { PageTransition } from "@/components/animations/page-transition";
 import "./globals.css";
 
 const inter = Inter({
@@ -51,12 +53,45 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} antialiased`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "TechVault",
+                  url: "https://techvault.store",
+                  logo: "https://techvault.store/logo.png",
+                  description: "Premium electronics e-commerce store offering the latest smartphones, laptops, tablets, and more.",
+                  sameAs: [],
+                },
+                {
+                  "@type": "WebSite",
+                  name: "TechVault",
+                  url: "https://techvault.store",
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target: "https://techvault.store/products?search={search_term_string}",
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+              ],
+            }),
+          }}
+        />
+      </head>
+      <body className={`${inter.variable} ${outfit.variable} antialiased`} suppressHydrationWarning>
         <Providers>
           <AuthProvider>
+            <ScrollProgress />
             <div className="flex min-h-screen flex-col">
               <Navbar />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                <PageTransition>{children}</PageTransition>
+              </main>
               <Footer />
             </div>
             <CartSidebar />

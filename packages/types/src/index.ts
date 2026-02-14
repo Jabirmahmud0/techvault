@@ -56,6 +56,7 @@ export const productQuerySchema = z.object({
     sort: z.enum(["price_asc", "price_desc", "newest", "rating", "name"]).default("newest"),
     brand: z.string().optional(),
     featured: z.coerce.boolean().optional(),
+    sellerId: z.string().uuid().optional(),
 });
 
 export const createProductSchema = z.object({
@@ -161,3 +162,82 @@ export const updateSettingsSchema = settingsSchema.omit({ id: true });
 
 export type Settings = z.infer<typeof settingsSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
+
+// ── User Profile Schemas ───────────────────────────────────────────────────
+
+export const updateProfileSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters").optional(),
+    image: z.string().url("Invalid image URL").optional().or(z.literal("")),
+    password: z.string().min(8, "Password must be at least 8 characters").optional(),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+// ── Forgot / Reset Password Schemas ────────────────────────────────────────
+
+export const forgotPasswordSchema = z.object({
+    email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+    token: z.string().min(1, "Reset token is required"),
+    password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+// ── Product Review Schemas ─────────────────────────────────────────────────
+
+export const createReviewSchema = z.object({
+    productId: z.string().uuid(),
+    rating: z.coerce.number().int().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5"),
+    comment: z.string().min(10, "Review must be at least 10 characters").max(1000, "Review must be under 1000 characters"),
+});
+
+export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+
+// ── Coupon Schemas ─────────────────────────────────────────────────────────
+
+export const createCouponSchema = z.object({
+    code: z.string().min(3, "Code must be at least 3 characters").max(50).toUpperCase(),
+    discountPercent: z.coerce.number().int().min(1, "Must be at least 1%").max(100, "Cannot exceed 100%"),
+    maxUses: z.coerce.number().int().positive("Must have at least 1 use").optional(),
+    expiresAt: z.string().optional(), // ISO date string
+});
+
+export const applyCouponSchema = z.object({
+    code: z.string().min(1, "Coupon code is required").toUpperCase(),
+});
+
+export type CreateCouponInput = z.infer<typeof createCouponSchema>;
+export type ApplyCouponInput = z.infer<typeof applyCouponSchema>;
+
+// ── Wishlist Schemas ───────────────────────────────────────────────────────
+
+export const toggleWishlistSchema = z.object({
+    productId: z.string().uuid("Invalid product ID"),
+});
+
+export type ToggleWishlistInput = z.infer<typeof toggleWishlistSchema>;
+
+// ── Contact / Support Schemas ──────────────────────────────────────────────
+
+export const contactFormSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters").max(100),
+    email: z.string().email("Invalid email address"),
+    subject: z.string().min(5, "Subject must be at least 5 characters").max(200),
+    message: z.string().min(20, "Message must be at least 20 characters").max(2000),
+});
+
+export type ContactFormInput = z.infer<typeof contactFormSchema>;

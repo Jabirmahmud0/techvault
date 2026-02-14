@@ -11,20 +11,12 @@ export const authController = {
         try {
             const result = await authService.register(req.body);
 
-            // Set refresh token as httpOnly cookie
-            res.cookie("refreshToken", result.refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                path: "/api/auth",
-            });
-
+            // Registration no longer returns tokens, just a success message
             res.status(201).json({
                 success: true,
                 data: {
                     user: result.user,
-                    accessToken: result.accessToken,
+                    message: result.message,
                 },
             });
 
@@ -46,6 +38,14 @@ export const authController = {
                 sameSite: "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
+            });
+
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 15 * 60 * 1000,
+                path: "/",
             });
 
             res.status(200).json({
@@ -79,6 +79,14 @@ export const authController = {
                 path: "/api/auth",
             });
 
+            res.cookie("accessToken", tokens.accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 15 * 60 * 1000,
+                path: "/",
+            });
+
             res.status(200).json({
                 success: true,
                 data: { accessToken: tokens.accessToken },
@@ -100,6 +108,7 @@ export const authController = {
 
     async logout(_req: Request, res: Response) {
         res.clearCookie("refreshToken", { path: "/api/auth" });
+        res.clearCookie("accessToken", { path: "/" });
         res.status(200).json({ success: true, message: "Logged out" });
     },
 
@@ -122,6 +131,14 @@ export const authController = {
                 path: "/api/auth",
             });
 
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 15 * 60 * 1000,
+                path: "/",
+            });
+
             res.status(200).json({
                 success: true,
                 data: {
@@ -133,6 +150,66 @@ export const authController = {
             // Send welcome email if it's a new user?
             // Checking if newly created is hard here without refactor, skipping for now to avoid complexity.
             // Or we could check if user.createdAt is very recent.
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /** POST /api/auth/forgot-password */
+    async forgotPassword(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                res.status(400).json({ success: false, error: "Email is required" });
+                return;
+            }
+            const result = await authService.forgotPassword(email);
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /** POST /api/auth/reset-password */
+    async resetPassword(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email, token, newPassword } = req.body;
+            if (!email || !token || !newPassword) {
+                res.status(400).json({ success: false, error: "Email, token, and new password are required" });
+                return;
+            }
+            const result = await authService.resetPassword(email, token, newPassword);
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /** POST /api/auth/verify-email */
+    async verifyEmail(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email, otp } = req.body;
+            if (!email || !otp) {
+                res.status(400).json({ success: false, error: "Email and OTP are required" });
+                return;
+            }
+            const result = await authService.verifyEmail(email, otp);
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /** POST /api/auth/resend-verification */
+    async resendVerification(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                res.status(400).json({ success: false, error: "Email is required" });
+                return;
+            }
+            const result = await authService.resendVerification(email);
+            res.status(200).json({ success: true, data: result });
         } catch (error) {
             next(error);
         }

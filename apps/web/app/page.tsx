@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
+import { HeroParallax } from "@/components/ui/hero-parallax";
+import { ScrollReveal } from "@/components/animations/scroll-reveal";
 
 /** Placeholder featured products for server-rendered homepage */
 const featuredProducts = [
@@ -61,6 +63,14 @@ const featuredProducts = [
   },
 ];
 
+// Map featured products for the hero parallax component
+const parallaxProducts = featuredProducts.map((p) => ({
+  title: p.name,
+  link: `/products/${p.slug}`,
+  thumbnail: p.image,
+}));
+
+
 const categories = [
   { name: "Smartphones", slug: "smartphones", icon: Smartphone, count: "50+" },
   { name: "Laptops", slug: "laptops", icon: Laptop, count: "40+" },
@@ -76,87 +86,23 @@ const perks = [
   { icon: Zap, title: "Fast Delivery", desc: "Same-day dispatch available" },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-
 export default function HomePage() {
   return (
     <div className="overflow-hidden">
       {/* ── Hero Section ─── */}
-      <section className="relative min-h-[80vh] flex items-center justify-center px-4" id="hero">
-        {/* Gradient blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-[100px] animate-float" />
-          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/15 rounded-full blur-[120px] animate-float" style={{ animationDelay: "3s" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]" />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
-              <Zap className="h-3.5 w-3.5 fill-primary" />
-              New arrivals just dropped
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-7xl font-bold font-[family-name:var(--font-heading)] leading-tight mt-4"
-          >
-            The Future of Tech{" "}
-            <span className="gradient-text">Starts Here</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto"
-          >
-            Premium electronics handpicked for you. From cutting-edge smartphones to
-            powerful laptops — all with free shipping and 2-year warranty.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Button variant="glow" size="xl" asChild>
-              <Link href="/products">
-                Shop Now <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="xl" asChild>
-              <Link href="/categories">Browse Categories</Link>
-            </Button>
-          </motion.div>
-        </div>
-      </section>
+      <HeroParallax products={parallaxProducts} />
 
       {/* ── Perks Bar ─── */}
-      <section className="border-y border-border bg-card/50">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="border-y border-border bg-card/50 relative z-10">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {perks.map((perk) => (
-              <div key={perk.title} className="flex items-center gap-3">
+            {perks.map((perk, index) => (
+              <ScrollReveal
+                key={perk.title}
+                variant="fade-up"
+                delay={index * 0.1}
+                className="flex items-center gap-3"
+              >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <perk.icon className="h-5 w-5" />
                 </div>
@@ -164,41 +110,35 @@ export default function HomePage() {
                   <p className="text-sm font-semibold">{perk.title}</p>
                   <p className="text-xs text-muted-foreground">{perk.desc}</p>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── Categories ─── */}
-      <section className="py-20 px-4" id="categories">
+      <section className="py-12 sm:py-20 px-4" id="categories">
         <div className="mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
+          <ScrollReveal variant="fade-up" className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-heading)]">
               Shop by Category
             </h2>
             <p className="mt-3 text-muted-foreground">
               Find exactly what you&apos;re looking for
             </p>
-          </motion.div>
+          </ScrollReveal>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"
-          >
-            {categories.map((cat) => (
-              <motion.div key={cat.slug} variants={itemVariants}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {categories.map((cat, index) => (
+              <ScrollReveal
+                key={cat.slug}
+                variant="scale-up"
+                delay={index * 0.05}
+                viewportAmount={0.3}
+              >
                 <Link
                   href={`/products?category=${cat.slug}`}
-                  className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                  className="group flex flex-col items-center gap-2 sm:gap-3 rounded-2xl border border-border bg-card p-4 sm:p-6 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
                   id={`category-${cat.slug}`}
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -209,19 +149,17 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground">{cat.count} products</p>
                   </div>
                 </Link>
-              </motion.div>
+              </ScrollReveal>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── Featured Products ─── */}
-      <section className="py-20 px-4 bg-card/30" id="featured-products">
+      <section className="py-12 sm:py-20 px-4 bg-card/30" id="featured-products">
         <div className="mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <ScrollReveal
+            variant="fade-up"
             className="flex items-center justify-between mb-12"
           >
             <div>
@@ -237,21 +175,20 @@ export default function HomePage() {
                 View All <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-          </motion.div>
+          </ScrollReveal>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {featuredProducts.map((product) => (
-              <motion.div key={product.id} variants={itemVariants}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {featuredProducts.map((product, index) => (
+              <ScrollReveal
+                key={product.id}
+                variant="fade-up"
+                delay={index * 0.05}
+                viewportAmount={0.2}
+              >
                 <ProductCard {...product} />
-              </motion.div>
+              </ScrollReveal>
             ))}
-          </motion.div>
+          </div>
 
           <div className="mt-8 text-center sm:hidden">
             <Button variant="outline" asChild>
@@ -264,21 +201,19 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA Banner ─── */}
-      <section className="py-20 px-4" id="cta-banner">
+      <section className="py-12 sm:py-20 px-4" id="cta-banner">
         <div className="mx-auto max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/20 via-accent/10 to-primary/5 border border-primary/20 p-8 sm:p-12 text-center"
+          <ScrollReveal
+            variant="scale-up"
+            className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary/20 via-accent/10 to-primary/5 border border-primary/20 p-6 sm:p-8 md:p-12 text-center"
           >
             {/* Glow */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
 
-            <h2 className="relative text-3xl md:text-4xl font-bold font-[family-name:var(--font-heading)]">
+            <h2 className="relative text-2xl sm:text-3xl md:text-4xl font-bold font-[family-name:var(--font-heading)]">
               Ready to upgrade your setup?
             </h2>
-            <p className="relative mt-4 text-muted-foreground max-w-lg mx-auto">
+            <p className="relative mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
               Join thousands of tech enthusiasts who already shop with TechVault. Get 10% off
               your first order.
             </p>
@@ -289,7 +224,7 @@ export default function HomePage() {
                 </Link>
               </Button>
             </div>
-          </motion.div>
+          </ScrollReveal>
         </div>
       </section>
     </div>

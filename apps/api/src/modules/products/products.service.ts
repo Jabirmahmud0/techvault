@@ -1,5 +1,6 @@
 import { eq, ilike, and, or, desc, asc, sql, count } from "drizzle-orm";
 import { db } from "../../config/database.js";
+import { redis } from "../../config/redis.js";
 import { products, categories, productImages } from "@repo/db/schema";
 import { ApiError } from "../../middleware/index.js";
 import type { ProductQuery, CreateProductInput, UpdateProductInput } from "@repo/types";
@@ -8,11 +9,51 @@ export const productsService = {
     /**
      * List products with filtering, sorting, and pagination.
      */
+    /**
+     * List products with filtering, sorting, and pagination.
+     * Caches results in Redis for 5 minutes.
+     * Uses a version key to invalidate all list caches on product updates.
+     */
     async list(query: ProductQuery) {
-        const { page = 1, limit = 10, category, search, minPrice, maxPrice, sort, brand, featured } = query;
+        // 1. Try Cache
+        let cacheKey: string | null = null;
+        if (redis) {
+            try {
+                // Get current data version to ensure we don't serve stale lists after updates
+                // Outputting this thought process as a tool call description to pause and re-verify. I will not actually run a replace here, I will run a grep first.
+                let version = await redis.get("products:version");
+                if (!version) {
+                    version = "1";
+                    await redis.set("products:version", version);
+                }
+
+                // Create a deterministic cache key based on the query and version
+                // Sort keys to ensure {a:1, b:2} and {b:2, a:1} generate same key
+                const sortedQuery = Object.keys(query).sort().reduce((obj: any, key) => {
+                    obj[key] = (query as any)[key];
+                    return obj;
+                }, {});
+
+                cacheKey = `products:list:v${version}:${JSON.stringify(sortedQuery)}`;
+
+                const cached = await redis.get(cacheKey);
+                if (cached) {
+                    return cached as { data: any[], pagination: any };
+                }
+            } catch (err) {
+                console.warn("Redis cache error:", err);
+                // Fallback to DB on error
+            }
+        }
+
+        const { page = 1, limit = 10, category, search, minPrice, maxPrice, sort, brand, featured, sellerId } = query;
         const offset = (page - 1) * limit;
 
         const whereConditions = [];
+
+        if (sellerId) {
+            whereConditions.push(eq(products.sellerId, sellerId));
+        }
 
         if (search) {
             whereConditions.push(
@@ -25,15 +66,6 @@ export const productsService = {
         }
 
         if (category) {
-            // Join with categories to filter by slug? Or is category the ID?
-            // Usually category in query is slug.
-            // Let's assume it's slug for now as per web url usage.
-            // We need a subquery or join.
-            // Simplest is to fetch category ID first or use multiple joins.
-            // Let's use where exists or just join.
-            // Actually, Drizzle's query builder is nice.
-            // But let's stick to simple where clauses if possible.
-            // If category is a slug, we need to find the category first.
             const categoryRecord = await db.query.categories.findFirst({
                 where: eq(categories.slug, category),
             });
@@ -41,7 +73,6 @@ export const productsService = {
             if (categoryRecord) {
                 whereConditions.push(eq(products.categoryId, categoryRecord.id));
             } else {
-                // If category not found, return empty?
                 return {
                     data: [],
                     pagination: {
@@ -71,29 +102,6 @@ export const productsService = {
         if (maxPrice !== undefined) {
             whereConditions.push(sql`${products.price} <= ${maxPrice}`);
         }
-
-        // Exclude archived/hidden products unless specifically requested (e.g. for admin)?
-        // For now, let's assume public list only shows non-archived.
-        // We might need an 'includeArchived' flag for admin.
-        // valid(query.includeArchived)?
-        // Let's just default to isArchived = false for public.
-        // But the admin panel uses this same endpoint? 
-        // Admin panel should probably send a specific flag or we should have a separate endpoint.
-        // Or we check role in controller. Controller calls this. 
-        // For now, let's leave isArchived check out or default to showing everything if not specified? 
-        // Standard: show only active.
-        // Let's add `whereConditions.push(eq(products.isArchived, false))` IF not admin?
-        // Let's keep it simple: filter by isArchived if passed, else default to false?
-        // The type `ProductQuery` likely doesn't have isArchived.
-        // I will default to showing everything for now to avoid hiding things from Admin, 
-        // but normally we filter `isArchived: false` for public.
-        // Let's add:
-        // whereConditions.push(eq(products.isArchived, false)); 
-        // But then Admin won't see them.
-        // I'll add a heuristic: if no specific filter, show all? No that's bad.
-        // I will assume this endpoint is public-facing primarily.
-        // I will filter `isArchived: false` by default.
-        // I will add a `showHidden` param to `ProductQuery` (I might need to cast/extend type locally).
 
         let orderBy = desc(products.createdAt);
         switch (sort) {
@@ -134,7 +142,7 @@ export const productsService = {
             },
         });
 
-        return {
+        const result = {
             data,
             pagination: {
                 page,
@@ -145,12 +153,38 @@ export const productsService = {
                 hasPrev: page > 1,
             },
         };
+
+        // 2. Set Cache
+        if (redis && cacheKey) {
+            try {
+                // Cache for 5 minutes
+                await redis.setex(cacheKey, 300, result);
+            } catch (err) {
+                console.warn("Redis set error:", err);
+            }
+        }
+
+        return result;
     },
 
     /**
      * Get a single product by slug.
+     * Caches result for 5 minutes.
      */
     async getBySlug(slug: string) {
+        const cacheKey = `products:slug:${slug}`;
+
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) {
+                    return cached;
+                }
+            } catch (err) {
+                console.warn("Redis get error:", err);
+            }
+        }
+
         const product = await db.query.products.findFirst({
             where: eq(products.slug, slug),
             with: {
@@ -169,11 +203,20 @@ export const productsService = {
             throw ApiError.notFound("Product not found");
         }
 
+        if (redis) {
+            try {
+                await redis.setex(cacheKey, 300, product);
+            } catch (err) {
+                console.warn("Redis set error:", err);
+            }
+        }
+
         return product;
     },
 
     /**
      * Create a new product.
+     * Invalidates product list cache.
      */
     async create(input: CreateProductInput, sellerId: string) {
         // Ensure slug is unique
@@ -217,19 +260,34 @@ export const productsService = {
             );
         }
 
+        // Invalidate list cache by incrementing version
+        if (redis) {
+            try {
+                await redis.incr("products:version");
+            } catch (err) {
+                console.warn("Redis incr error:", err);
+            }
+        }
+
         return product;
     },
 
     /**
      * Update a product.
+     * Invalidates product specific cache and list cache.
      */
-    async update(id: string, input: UpdateProductInput) {
+    async update(id: string, input: UpdateProductInput, userId?: string, userRole?: string) {
         const product = await db.query.products.findFirst({
             where: eq(products.id, id)
         });
 
         if (!product) {
             throw ApiError.notFound("Product not found");
+        }
+
+        // Ownership check
+        if (userRole !== "ADMIN" && userId && product.sellerId !== userId) {
+            throw ApiError.forbidden("You do not have permission to update this product");
         }
 
         const { images, price, compareAtPrice, ...rest } = input;
@@ -244,6 +302,19 @@ export const productsService = {
             .where(eq(products.id, id))
             .returning();
 
+        // Invalidate caches
+        if (redis) {
+            try {
+                await Promise.all([
+                    redis.del(`products:slug:${product.slug}`),
+                    redis.del(`products:id:${id}`), // if we add getById cache later
+                    redis.incr("products:version") // invalidate lists
+                ]);
+            } catch (err) {
+                console.warn("Redis invalidation error:", err);
+            }
+        }
+
         return updated;
     },
 
@@ -251,6 +322,19 @@ export const productsService = {
      * Get a single product by its UUID.
      */
     async getById(id: string) {
+        const cacheKey = `products:id:${id}`;
+
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) {
+                    return cached;
+                }
+            } catch (err) {
+                console.warn("Redis get error:", err);
+            }
+        }
+
         const product = await db.query.products.findFirst({
             where: eq(products.id, id),
             with: {
@@ -263,13 +347,22 @@ export const productsService = {
             throw ApiError.notFound("Product not found");
         }
 
+        if (redis) {
+            try {
+                await redis.setex(cacheKey, 300, product);
+            } catch (err) {
+                console.warn("Redis set error:", err);
+            }
+        }
+
         return product;
     },
 
     /**
      * Delete a product by ID. Related records cascade-delete via DB schema.
+     * Invalidates caches.
      */
-    async delete(id: string) {
+    async delete(id: string, userId?: string, userRole?: string) {
         const product = await db.query.products.findFirst({
             where: eq(products.id, id),
         });
@@ -278,22 +371,63 @@ export const productsService = {
             throw ApiError.notFound("Product not found");
         }
 
+        // Ownership check
+        if (userRole !== "ADMIN" && userId && product.sellerId !== userId) {
+            throw ApiError.forbidden("You do not have permission to delete this product");
+        }
+
         await db.delete(products).where(eq(products.id, id));
+
+        // Invalidate caches
+        if (redis) {
+            try {
+                await Promise.all([
+                    redis.del(`products:slug:${product.slug}`),
+                    redis.del(`products:id:${id}`),
+                    redis.incr("products:version")
+                ]);
+            } catch (err) {
+                console.warn("Redis invalidation error:", err);
+            }
+        }
 
         return { deleted: true };
     },
 
     async getBrands() {
+        // Cache brands too? They change rarely.
+        const cacheKey = "products:brands";
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) return cached as string[];
+            } catch (e) { }
+        }
+
         const brands = await db
             .selectDistinct({ brand: products.brand })
             .from(products)
             .orderBy(products.brand);
 
-        return brands.map(b => b.brand).filter(Boolean);
+        const result = brands.map(b => b.brand).filter(Boolean) as string[];
+
+        if (redis) {
+            await redis.setex(cacheKey, 3600, result); // 1 hour
+        }
+
+        return result;
     },
 
     async getFeatured(limit = 8) {
-        return db.query.products.findMany({
+        const cacheKey = `products:featured:${limit}`;
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) return cached;
+            } catch (e) { }
+        }
+
+        const data = await db.query.products.findMany({
             where: eq(products.isFeatured, true),
             limit,
             with: {
@@ -301,5 +435,11 @@ export const productsService = {
                 category: true
             }
         });
+
+        if (redis) {
+            await redis.setex(cacheKey, 600, data); // 10 mins
+        }
+
+        return data;
     },
 };

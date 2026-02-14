@@ -2,7 +2,9 @@
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useState, type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * App-level providers: Theme + React Query.
@@ -22,10 +24,13 @@ export function Providers({ children }: { children: ReactNode }) {
     );
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <NextThemesProvider attribute="data-theme" defaultTheme="dark" enableSystem>
-                {children}
-            </NextThemesProvider>
-        </QueryClientProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+            <QueryClientProvider client={queryClient}>
+                <NextThemesProvider attribute="data-theme" defaultTheme="dark" enableSystem disableTransitionOnChange>
+                    {children}
+                    <Toaster />
+                </NextThemesProvider>
+            </QueryClientProvider>
+        </GoogleOAuthProvider>
     );
 }

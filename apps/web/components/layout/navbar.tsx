@@ -31,6 +31,7 @@ import { useCartStore } from "@/lib/stores/cart-store";
 import { useWishlistStore } from "@/lib/stores/wishlist-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { api } from "@/lib/api";
+import { AnimatedCartCounter } from "@/components/animations/animated-cart-counter";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -48,12 +49,22 @@ export function Navbar() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const { toggleCart, totalItems } = useCartStore();
-    const { user, isAuthenticated, logout } = useAuthStore();
+    const { user, isAuthenticated } = useAuthStore();
     const wishlistCount = useWishlistStore((s) => s.items.length);
     const itemCount = totalItems();
 
     const handleLogout = async () => {
-        await api.logout();
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+            await fetch(`${apiUrl}/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch {
+            // Ignore network errors on logout
+        }
+        useAuthStore.getState().logout();
+        window.location.href = "/login";
     };
 
     useEffect(() => setMounted(true), []);
@@ -131,15 +142,7 @@ export function Navbar() {
                             id="nav-cart"
                         >
                             <ShoppingCart className="h-5 w-5" />
-                            {mounted && itemCount > 0 && (
-                                <motion.span
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
-                                >
-                                    {itemCount > 99 ? "99+" : itemCount}
-                                </motion.span>
-                            )}
+                            {mounted && <AnimatedCartCounter count={itemCount} />}
                         </Button>
 
                         <ThemeToggle />
@@ -159,16 +162,32 @@ export function Navbar() {
                                 <DropdownMenuContent align="end" className="w-56">
                                     <DropdownMenuLabel>
                                         <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium leading-none">{user.name}</p>
+                                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                                    {user.role}
+                                                </span>
+                                            </div>
                                             <p className="text-xs leading-none text-muted-foreground">
                                                 {user.email}
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem>
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        <span>Profile</span>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href={
+                                                user?.role === "ADMIN"
+                                                    ? "/admin/profile"
+                                                    : user?.role === "SELLER"
+                                                        ? "/seller/settings"
+                                                        : "/profile"
+                                            }
+                                            className="cursor-pointer"
+                                        >
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            <span>Profile</span>
+                                        </Link>
                                     </DropdownMenuItem>
 
                                     <DropdownMenuItem asChild>
@@ -192,7 +211,7 @@ export function Navbar() {
                                 id="nav-login"
                                 asChild
                             >
-                                <Link href="/login">
+                                <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
                                     <User className="h-5 w-5" />
                                 </Link>
                             </Button>

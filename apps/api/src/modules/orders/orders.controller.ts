@@ -52,14 +52,49 @@ export const ordersController = {
     },
 
     /**
+     * List seller orders
+     */
+    async listSeller(req: Request, res: Response, next: NextFunction) {
+        try {
+            const sellerId = (req.user as any).userId;
+            const { page, limit, search, status } = req.query;
+
+            const result = await ordersService.listSellerOrders(sellerId, {
+                page: Number(page) || 1,
+                limit: Number(limit) || 10,
+                search: search ? String(search) : undefined,
+                status: status ? String(status) : undefined,
+            });
+            res.json({ success: true, ...result });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /**
+     * Get seller stats
+     */
+    async getSellerStats(req: Request, res: Response, next: NextFunction) {
+        try {
+            const sellerId = (req.user as any).userId;
+            const stats = await ordersService.getSellerStats(sellerId);
+            res.json({ success: true, data: stats });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /**
      * Update order status (Admin)
      */
     async updateStatus(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
             const { status } = req.body;
+            const userId = (req.user as any).userId;
+            const role = (req.user as any).role;
 
-            const data = await ordersService.updateStatus(id as string, status);
+            const data = await ordersService.updateStatus(id as string, status, userId, role);
             res.json({ success: true, data });
         } catch (error) {
             next(error);

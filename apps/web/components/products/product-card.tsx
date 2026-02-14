@@ -53,6 +53,13 @@ export function ProductCard({
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation(); // Prevent navigation to product page
+
+        const target = e.currentTarget as HTMLElement;
+        import("@/components/animations/fly-to-cart").then(({ flyToCart }) => {
+            flyToCart(target);
+        });
+
         addItem({
             id,
             productId: id,
@@ -66,9 +73,13 @@ export function ProductCard({
 
     return (
         <motion.div
-            whileHover={{ y: -4 }}
+            whileHover={{
+                y: -4,
+                scale: 1.03,
+                boxShadow: "0 20px 40px rgba(var(--primary-rgb, 59 130 246) / 0.15)",
+            }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="group"
+            className="group cursor-pointer"
         >
             <Link
                 href={`/products/${slug}`}
@@ -81,7 +92,6 @@ export function ProductCard({
                         src={image}
                         alt={name}
                         fill
-                        unoptimized
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />

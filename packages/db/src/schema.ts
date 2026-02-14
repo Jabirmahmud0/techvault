@@ -37,6 +37,8 @@ export const users = pgTable("users", {
     authProvider: text("auth_provider", { enum: ["EMAIL", "GOOGLE"] }).default("EMAIL"),
     googleId: varchar("google_id", { length: 255 }).unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
+    otpCode: varchar("otp_code", { length: 6 }),
+    otpExpiresAt: timestamp("otp_expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -266,7 +268,11 @@ export const orders = pgTable("orders", {
     shippingAddress: json("shipping_address"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+    index("orders_user_idx").on(table.userId),
+    index("orders_status_idx").on(table.status),
+    index("orders_created_at_idx").on(table.createdAt),
+]);
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
     user: one(users, {

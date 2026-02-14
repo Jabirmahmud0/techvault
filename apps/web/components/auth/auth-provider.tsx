@@ -1,15 +1,16 @@
 "use client";
 
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { AuthSync } from "./auth-sync";
 
+/**
+ * Auth provider that syncs authentication state on mount.
+ * Uses custom JWT auth via Zustand store — no NextAuth SessionProvider needed.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    // We use an environment variable for the client ID
-    // If not set, the Google Login feature will just fail gracefully or log an error
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-
     return (
-        <GoogleOAuthProvider clientId={clientId}>
+        <>
+            <AuthSync />
             {children}
-        </GoogleOAuthProvider>
+        </>
     );
 }

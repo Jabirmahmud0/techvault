@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     LayoutDashboard,
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const sidebarLinks = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -29,7 +30,26 @@ const sidebarLinks = [
 
 export function AdminSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const logout = useAuthStore((s) => s.logout);
+
+    const handleLogout = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+            await fetch(`${apiUrl}/auth/logout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+            logout();
+            toast.success("Logged out successfully");
+            router.push("/login"); // Redirect to login
+            router.refresh();
+        } catch (error) {
+            console.error("Logout failed", error);
+            logout(); // Clear client state anyway
+            router.push("/login");
+        }
+    };
 
     return (
         <aside className="hidden w-64 flex-col border-r border-border bg-card/50 backdrop-blur-xl md:flex">
@@ -63,7 +83,7 @@ export function AdminSidebar() {
                 <Button
                     variant="ghost"
                     className="w-full justify-start text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                    onClick={() => logout()}
+                    onClick={handleLogout}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
@@ -75,8 +95,28 @@ export function AdminSidebar() {
 
 export function MobileAdminSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const logout = useAuthStore((s) => s.logout);
     const [open, setOpen] = useState(false);
+
+    const handleLogout = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+            await fetch(`${apiUrl}/auth/logout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+            logout();
+            setOpen(false);
+            toast.success("Logged out successfully");
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Logout failed", error);
+            logout();
+            router.push("/login");
+        }
+    };
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -117,7 +157,7 @@ export function MobileAdminSidebar() {
                     <Button
                         variant="ghost"
                         className="w-full justify-start text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                        onClick={() => logout()}
+                        onClick={handleLogout}
                     >
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout

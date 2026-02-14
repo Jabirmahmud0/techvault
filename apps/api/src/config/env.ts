@@ -35,6 +35,20 @@ const envSchema = z.object({
     // Redis (Upstash)
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+
+    // Stripe
+    STRIPE_SECRET_KEY: z.string().min(1, "STRIPE_SECRET_KEY is required"),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1, "STRIPE_WEBHOOK_SECRET is required"),
+
+    // Email (Resend or SMTP)
+    RESEND_API_KEY: z.string().optional(),
+
+    // SMTP
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().optional().default(587),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    SMTP_FROM: z.string().optional().default("noreply@example.com"),
 });
 
 /** Parsed and typed environment variables */

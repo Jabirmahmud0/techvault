@@ -1,6 +1,6 @@
 import { eq, desc, and, ilike, or, sql, count } from "drizzle-orm";
 import { db } from "../../config/database.js";
-import { orders, orderItems, users } from "@repo/db/schema";
+import { orders, orderItems, users, products } from "@repo/db/schema";
 import { ApiError } from "../../middleware/index.js";
 
 export const ordersService = {
@@ -15,6 +15,156 @@ export const ordersService = {
                 items: true
             }
         });
+    },
+
+    /**
+     * List orders containing products from a specific seller.
+     */
+    async listSellerOrders(sellerId: string, query: { page?: number; limit?: number; search?: string; status?: string }) {
+        const { page = 1, limit = 10, search, status } = query;
+        const offset = (page - 1) * limit;
+
+        // Find relevant order IDs via join
+        const sellerOrderIdsResult = await db
+            .selectDistinct({ id: orders.id })
+            .from(orders)
+            .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+            .innerJoin(products, eq(orderItems.productId, products.id))
+            .where(and(
+                eq(products.sellerId, sellerId),
+                status ? eq(orders.status, status as any) : undefined
+            ));
+
+        const sellerOrderIds = sellerOrderIdsResult.map(o => o.id);
+
+        if (sellerOrderIds.length === 0) {
+            return {
+                data: [],
+                pagination: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPages: 0,
+                    hasNext: false,
+                    hasPrev: false,
+                }
+            };
+        }
+
+        const total = sellerOrderIds.length;
+        const totalPages = Math.ceil(total / limit);
+
+        // Simple finding does not support convenient pagination on IDs if we did it in memory
+        // But since we fetched all IDs, we can slice.
+        // For production with millions of orders this is bad, but for MVP it's fine.
+        const paginatedIds = sellerOrderIds.slice(offset, offset + limit);
+
+        if (paginatedIds.length === 0) {
+            return {
+                data: [],
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages,
+                    hasNext: false,
+                    hasPrev: page > 1,
+                }
+            };
+        }
+
+        const data = await db.query.orders.findMany({
+            where: (orders, { inArray }) => inArray(orders.id, paginatedIds),
+            orderBy: [desc(orders.createdAt)],
+            with: {
+                user: true,
+                items: {
+                    with: {
+                        product: true
+                    }
+                }
+            }
+        });
+
+        // Filter items to only show those belonging to the seller
+        const dataWithFilteredItems = data.map(order => ({
+            ...order,
+            items: order.items.filter(item => item.product.sellerId === sellerId)
+        }));
+
+        return {
+            data: dataWithFilteredItems,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+            },
+        };
+    },
+
+    /**
+     * Get seller dashboard statistics.
+     */
+    async getSellerStats(sellerId: string) {
+        // 1. Total Revenue (sum of items sold by this seller in PAID/SHIPPED/DELIVERED orders)
+        const revenueResult = await db
+            .select({
+                total: sql<number>`sum(${orderItems.price} * ${orderItems.quantity})`
+            })
+            .from(orderItems)
+            .innerJoin(orders, eq(orderItems.orderId, orders.id))
+            .innerJoin(products, eq(orderItems.productId, products.id))
+            .where(and(
+                eq(products.sellerId, sellerId),
+                or(
+                    eq(orders.status, "PAID"),
+                    eq(orders.status, "SHIPPED"),
+                    eq(orders.status, "DELIVERED")
+                )
+            ));
+
+        const totalRevenue = Number(revenueResult[0]?.total || 0);
+
+        // 2. Total Orders (distinct orders containing seller's products)
+        const ordersResult = await db
+            .selectDistinct({ id: orders.id })
+            .from(orders)
+            .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+            .innerJoin(products, eq(orderItems.productId, products.id))
+            .where(eq(products.sellerId, sellerId));
+
+        const totalOrders = ordersResult.length;
+
+        // 3. Total Products (count of products owned by seller)
+        const productsResult = await db
+            .select({ count: count() })
+            .from(products)
+            .where(eq(products.sellerId, sellerId));
+
+        const totalProducts = productsResult[0]?.count || 0;
+
+        // 4. Pending Orders (Active Now equivalent - orders needing attention)
+        const pendingOrdersResult = await db
+            .selectDistinct({ id: orders.id })
+            .from(orders)
+            .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+            .innerJoin(products, eq(orderItems.productId, products.id))
+            .where(and(
+                eq(products.sellerId, sellerId),
+                eq(orders.status, "PAID") // Paid but not shipped yet
+            ));
+
+        const pendingOrders = pendingOrdersResult.length;
+
+        return {
+            totalRevenue,
+            totalOrders,
+            totalProducts,
+            pendingOrders
+        };
     },
 
     /**
@@ -116,12 +266,36 @@ export const ordersService = {
     /**
      * Update order status (Admin).
      */
-    async updateStatus(id: string, status: string) {
+    async updateStatus(id: string, status: string, userId: string, role: string) {
         // Validate status
         if (!["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"].includes(status)) {
             throw ApiError.badRequest("Invalid status");
         }
 
+        const order = await db.query.orders.findFirst({
+            where: eq(orders.id, id),
+            with: {
+                items: {
+                    with: {
+                        product: true
+                    }
+                }
+            }
+        });
+
+        if (!order) {
+            throw ApiError.notFound("Order not found");
+        }
+
+        // Authorization check for Seller
+        if (role === "SELLER") {
+            const hasSellerItems = order.items.some(item => item.product.sellerId === userId);
+            if (!hasSellerItems) {
+                throw ApiError.forbidden("You do not have permission to update this order");
+            }
+        }
+
+        // Update status
         const [updated] = await db
             .update(orders)
             .set({
@@ -130,10 +304,6 @@ export const ordersService = {
             })
             .where(eq(orders.id, id))
             .returning();
-
-        if (!updated) {
-            throw ApiError.notFound("Order not found");
-        }
 
         return updated;
     }

@@ -1,4 +1,4 @@
-import { useAuthStore } from "./stores/auth-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 // On the client (browser), use same-origin path so requests go through
 // the Next.js rewrite proxy defined in next.config.js.
@@ -27,7 +27,7 @@ export async function apiClient<T>(
         ...options,
     };
 
-    // Attach access token if available
+    // Attach access token from Zustand store (client-side only)
     if (typeof window !== "undefined") {
         const token = useAuthStore.getState().accessToken;
         if (token) {
@@ -40,47 +40,12 @@ export async function apiClient<T>(
 
     const response = await fetch(url, config);
 
-    // Handle 401 Unauthorized (Token expired)
     if (response.status === 401) {
-        try {
-            // Try to refresh token
-            const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: "POST",
-                credentials: "include", // send httpOnly cookie
-            });
-
-            if (refreshRes.ok) {
-                const data = await refreshRes.json();
-                const newAccessToken = data.data.accessToken;
-
-                // Update store
-                useAuthStore.getState().setAuth(
-                    // @ts-expect-error - user might be null but we just want to update token
-                    useAuthStore.getState().user,
-                    newAccessToken
-                );
-
-                // Retry original request with new token
-                const newConfig = {
-                    ...config,
-                    headers: {
-                        ...config.headers,
-                        Authorization: `Bearer ${newAccessToken}`,
-                    },
-                };
-                const retryRes = await fetch(url, newConfig);
-                if (retryRes.ok) return retryRes.json();
-            } else {
-                // Refresh failed - logout
-                useAuthStore.getState().logout();
-                window.location.href = "/login";
-                throw new Error("Session expired");
-            }
-        } catch (error) {
+        // Token expired — clear auth state
+        if (typeof window !== "undefined") {
             useAuthStore.getState().logout();
-            window.location.href = "/login";
-            throw error;
         }
+        throw new Error("Session expired");
     }
 
     if (!response.ok) {
@@ -133,16 +98,6 @@ export const api = {
 
     delete: <T>(endpoint: string, options?: RequestInit) =>
         apiClient<T>(endpoint, { ...options, method: "DELETE" }),
-
-    logout: async () => {
-        try {
-            await apiClient("/auth/logout", { method: "POST" });
-        } catch (error) {
-            console.error("Logout error:", error);
-        } finally {
-            useAuthStore.getState().logout();
-            window.location.href = "/login";
-        }
-    },
 };
+
 

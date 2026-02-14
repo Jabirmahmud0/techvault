@@ -5,7 +5,8 @@ interface User {
     id: string;
     name: string;
     email: string;
-    role: "USER" | "ADMIN";
+    role: "USER" | "SELLER" | "ADMIN";
+    image?: string | null;
 }
 
 interface AuthState {
@@ -13,6 +14,7 @@ interface AuthState {
     accessToken: string | null;
     isAuthenticated: boolean;
     hasHydrated: boolean;
+    userCheckComplete: boolean;
     setAuth: (user: User, accessToken: string) => void;
     updateUser: (user: Partial<User>) => void;
     logout: () => void;
@@ -26,11 +28,12 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             isAuthenticated: false,
             hasHydrated: false,
+            userCheckComplete: false,
 
             setAuth: (user, accessToken) =>
                 set({ user, accessToken, isAuthenticated: true }),
 
-            setHasHydrated: (state) => set({ hasHydrated: state }),
+            setHasHydrated: (state) => set({ hasHydrated: state, userCheckComplete: true }),
 
             updateUser: (updates) =>
                 set((state) => ({
@@ -40,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
             logout: () => set({ user: null, accessToken: null, isAuthenticated: false }),
         }),
         {
-            name: "techvault-auth",
+            name: "auth-storage",
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true);
             },

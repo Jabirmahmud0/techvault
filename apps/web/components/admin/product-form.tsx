@@ -36,9 +36,11 @@ interface ProductFormProps {
     product?: any;
     /** Product ID for edit mode (used in PUT request) */
     productId?: string;
+    /** URL to redirect to after success */
+    redirectUrl?: string;
 }
 
-export function ProductForm({ product, productId }: ProductFormProps = {}) {
+export function ProductForm({ product, productId, redirectUrl = "/admin/products" }: ProductFormProps = {}) {
     const router = useRouter();
     const queryClient = useQueryClient();
     const isEditMode = !!product;
@@ -97,7 +99,8 @@ export function ProductForm({ product, productId }: ProductFormProps = {}) {
             queryClient.invalidateQueries({ queryKey: ["admin-products"] });
             queryClient.invalidateQueries({ queryKey: ["admin-product"] });
             queryClient.invalidateQueries({ queryKey: ["admin"] });
-            router.push("/admin/products");
+            queryClient.invalidateQueries({ queryKey: ["seller-products"] }); // Invalidate seller query too
+            router.push(redirectUrl);
             router.refresh();
         } catch (error: any) {
             console.error(error);

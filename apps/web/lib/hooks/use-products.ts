@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 export interface ProductImage {
@@ -44,7 +44,7 @@ interface ProductsResponse {
     };
 }
 
-export function useProducts(params?: Record<string, string | number | boolean>) {
+export function useProducts(params?: Record<string, string | number | boolean>, initialData?: ProductsResponse) {
     // create a query key that includes all params so it refetches when they change
     const queryKey = ["products", params];
 
@@ -62,6 +62,7 @@ export function useProducts(params?: Record<string, string | number | boolean>) 
         queryKey,
         queryFn: () => api.get<ProductsResponse>(`/products?${queryString}`),
         staleTime: 1000 * 60 * 5, // 5 minutes
+        initialData: initialData,
     });
 }
 
@@ -70,5 +71,40 @@ export function useProduct(slug: string) {
         queryKey: ["product", slug],
         queryFn: () => api.get<{ data: Product }>(`/products/${slug}`).then((res) => res.data),
         enabled: !!slug,
+    });
+}
+
+/**
+ * Infinite scroll hook for product listings.
+ * Fetches products page by page using TanStack Query's useInfiniteQuery.
+ */
+export function useInfiniteProducts(
+    params?: Record<string, string | number | boolean>
+) {
+    const cleanParams = Object.entries(params || {}).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== "") {
+            acc[key] = String(value);
+        }
+        return acc;
+    }, {} as Record<string, string>);
+
+    return useInfiniteQuery({
+        queryKey: ["products", "infinite", cleanParams],
+        queryFn: ({ pageParam = 1 }) => {
+            const queryString = new URLSearchParams({
+                ...cleanParams,
+                page: String(pageParam),
+                limit: "12",
+            }).toString();
+            return api.get<ProductsResponse>(`/products?${queryString}`);
+        },
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            if (lastPage.pagination?.hasNext) {
+                return lastPage.pagination.page + 1;
+            }
+            return undefined;
+        },
+        staleTime: 1000 * 60 * 5,
     });
 }

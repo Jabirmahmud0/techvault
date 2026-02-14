@@ -23,4 +23,16 @@ router.get("/me", authenticate, authController.getMe);
 /** POST /api/auth/logout — Clear refresh token cookie */
 router.post("/logout", authController.logout);
 
+/** POST /api/auth/forgot-password — Request password reset email */
+router.post("/forgot-password", authController.forgotPassword);
+
+/** POST /api/auth/reset-password — Reset password with token */
+router.post("/reset-password", authController.resetPassword);
+
+/** POST /api/auth/verify-email — Verify email with token */
+router.post("/verify-email", authController.verifyEmail);
+
+/** POST /api/auth/resend-verification — Resend verification email (public) */
+router.post("/resend-verification", authController.resendVerification);
+
 export default router;
