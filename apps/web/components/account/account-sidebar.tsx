@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useState } from "react";
-import { api } from "@/lib/api";
+
 
 const accountLinks = [
     { href: "/profile", label: "Profile", icon: User },
@@ -26,8 +26,8 @@ export function AccountSidebar() {
     const pathname = usePathname();
     // const { logout } = useAuthStore(); // Using direct api.logout for consistency with Navbar
 
-    const handleLogout = async () => {
-        await api.logout();
+    const handleLogout = () => {
+        useAuthStore.getState().logout();
     };
 
     return (
@@ -76,8 +76,8 @@ export function MobileAccountSidebar() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
 
-    const handleLogout = async () => {
-        await api.logout();
+    const handleLogout = () => {
+        useAuthStore.getState().logout();
     };
 
     return (
