@@ -47,10 +47,10 @@ postgresql://neondb_owner:****@ep-calm-darkness-a1ddlwe4.ap-southeast-1.aws.neon
 ### 2b. Configure service settings
 
 1. Click on the deployed service → **Settings**
-2. Set **Root Directory** to: `apps/api`
-3. Railway will auto-detect the `railway.json` config, which sets:
-   - Build: `cd ../.. && npx turbo run build --filter=api`
-   - Start: `node dist/index.js`
+2. **Root Directory**: Leave **EMPTY** (repo root) — the monorepo needs workspace resolution for `@repo/db` and `@repo/types`
+3. Railway will auto-detect the `railway.json` at the repo root, which sets:
+   - Build: `npm ci && npx turbo run build --filter=api`
+   - Start: `node apps/api/dist/index.js`
    - Health check: `/api/health`
 
 ### 2c. Set environment variables
@@ -199,7 +199,7 @@ Go to [Stripe Dashboard](https://dashboard.stripe.com/) → **Developers** → *
 | CORS errors | Check `FRONTEND_URL` on Railway matches your Vercel URL exactly (no trailing slash) |
 | API returns 500 | Check Railway logs: **Deployments** → click latest → **View Logs** |
 | Build fails on Vercel | Make sure **Root Directory** is `apps/web` and **Install Command** is `cd ../.. && npm install` |
-| Build fails on Railway | Check that `railway.json` is in `apps/api/` with the correct build command |
+| Build fails on Railway | Make sure `railway.json` is at the **repo root** (not in `apps/api/`) and Root Directory is empty |
 | Images not loading | Check `next.config.js` allows the image domains |
 | Google OAuth fails | Make sure Vercel URL is in authorized origins AND redirect URIs |
 | DB connection fails | Make sure `DATABASE_URL` has `?sslmode=require` |
