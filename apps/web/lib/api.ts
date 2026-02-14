@@ -40,8 +40,8 @@ export async function apiClient<T>(
 
     const response = await fetch(url, config);
 
-    if (response.status === 401) {
-        // Token expired — clear auth state
+    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
+        // Token expired — clear auth state (skip for auth endpoints to prevent loops)
         if (typeof window !== "undefined") {
             useAuthStore.getState().logout();
         }

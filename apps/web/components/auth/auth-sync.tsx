@@ -28,6 +28,14 @@ export function AuthSync() {
                     }
                 }
 
+                // Only try refresh if we had a previous session (stale token in localStorage)
+                // For completely unauthenticated visitors, skip the refresh call
+                const hadPreviousSession = !!accessToken;
+                if (!hadPreviousSession) {
+                    logout();
+                    return;
+                }
+
                 // Try refreshing the token via the httpOnly cookie
                 const refreshRes = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`,

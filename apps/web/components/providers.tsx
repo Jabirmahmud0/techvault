@@ -18,6 +18,11 @@ export function Providers({ children }: { children: ReactNode }) {
                     queries: {
                         staleTime: 60 * 1000, // 1 minute
                         refetchOnWindowFocus: false,
+                        retry: (failureCount, error) => {
+                            // Don't retry auth errors
+                            if (error?.message === "Session expired") return false;
+                            return failureCount < 2;
+                        },
                     },
                 },
             })
