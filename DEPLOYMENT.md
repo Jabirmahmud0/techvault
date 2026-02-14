@@ -51,7 +51,7 @@ Copy your `DATABASE_URL` from Neon Dashboard → Connection Details.
 | **Region** | Oregon (US West) or closest to you |
 | **Root Directory** | *(leave empty)* |
 | **Runtime** | Node |
-| **Build Command** | `npm ci && npx turbo run build --filter=api` |
+| **Build Command** | `npm ci --include=dev && npx turbo run build --filter=api` |
 | **Start Command** | `node apps/api/dist/index.js` |
 | **Plan** | Free |
 
@@ -201,6 +201,6 @@ Render's free tier sleeps after 15 min of inactivity. Use a free cron service to
 | API returns 500 | Check Render logs: Dashboard → your service → **Logs** |
 | Slow first request | Render free tier cold start (~30s). Cron pinger prevents this |
 | Build fails on Vercel | Root Directory = `apps/web`, Install Command = `cd ../.. && npm install` |
-| Build fails on Render | Root Directory = empty, Build Command = `npm ci && npx turbo run build --filter=api` |
+| Build fails on Render | Root Directory = empty, Build Command = `npm ci --include=dev && npx turbo run build --filter=api` |
 | Google OAuth fails | Add Vercel URL to authorized origins AND redirect URIs |
 | DB connection fails | `DATABASE_URL` must have `?sslmode=require` |
