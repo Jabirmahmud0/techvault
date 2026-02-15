@@ -16,6 +16,7 @@ export function AuthSync() {
     const setAuth = useAuthStore((s) => s.setAuth);
     const logout = useAuthStore((s) => s.logout);
     const setHasHydrated = useAuthStore((s) => s.setHasHydrated);
+    const setUserCheckComplete = useAuthStore((s) => s.setUserCheckComplete);
     const accessToken = useAuthStore((s) => s.accessToken);
     const user = useAuthStore((s) => s.user);
 
@@ -56,6 +57,7 @@ export function AuthSync() {
                         if (res.data) {
                             setAuth(res.data, accessToken);
                             setHasHydrated(true);
+                            setUserCheckComplete(true);
                             return;
                         }
                     } catch {
@@ -68,7 +70,9 @@ export function AuthSync() {
                 const hadPreviousSession = !!accessToken || !!user;
                 if (!hadPreviousSession) {
                     // No previous session at all — nothing to restore
-                    setHasHydrated(true);
+                    // No previous session at all — nothing to restore
+                    setHasHydrated(true); // store is loaded
+                    setUserCheckComplete(true); // verification done (no user)
                     return;
                 }
 
@@ -110,7 +114,7 @@ export function AuthSync() {
                 // Do NOT logout — keep existing session, retry on next navigation.
                 console.warn("[AuthSync] Network error during session restore — will retry on next load");
             } finally {
-                setHasHydrated(true);
+                setUserCheckComplete(true);
             }
         }
 
