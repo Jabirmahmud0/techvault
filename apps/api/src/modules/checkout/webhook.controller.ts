@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import { db } from "../../config/database.js";
 import { orders, orderItems, products } from "@repo/db/schema";
 import { env } from "../../config/env.js";
@@ -81,10 +81,8 @@ async function handleCheckoutComplete(session: any) {
 
     let shippingAddress;
     let items: Array<{
-        productId: string;
-        productName: string;
-        productImage: string;
-        quantity: number;
+        pid: string;
+        qty: number;
         price: string;
     }>;
 
@@ -106,6 +104,15 @@ async function handleCheckoutComplete(session: any) {
         return;
     }
 
+    // Fetch product details from DB because metadata is minified
+    const productIds = items.map((i) => i.pid);
+    const dbProducts = await db.query.products.findMany({
+        where: inArray(products.id, productIds),
+        with: { images: true },
+    });
+
+    const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
     const totalAmount = (session.amount_total / 100).toFixed(2); // Convert cents to dollars
 
     // ── All DB writes in a single transaction ────────────────────────────
@@ -126,26 +133,40 @@ async function handleCheckoutComplete(session: any) {
             throw new Error("Failed to create order");
         }
 
-        // 2. Create order items
-        await tx.insert(orderItems).values(
-            items.map((item) => ({
+        // 2. Create order items (using DB data for name/image)
+        const orderItemsData = items.map((item) => {
+            const product = productMap.get(item.pid);
+            if (!product) {
+                // Should not happen if DB is consistent, but fallback safely
+                return {
+                    orderId: newOrder.id,
+                    productId: item.pid,
+                    productName: "Unknown Product",
+                    productImage: "",
+                    quantity: item.qty,
+                    price: item.price,
+                };
+            }
+            return {
                 orderId: newOrder.id,
-                productId: item.productId,
-                productName: item.productName,
-                productImage: item.productImage,
-                quantity: item.quantity,
+                productId: item.pid,
+                productName: product.name,
+                productImage: product.images[0]?.url || "",
+                quantity: item.qty,
                 price: item.price,
-            }))
-        );
+            };
+        });
+
+        await tx.insert(orderItems).values(orderItemsData);
 
         // 3. Decrement inventory for each product
         for (const item of items) {
             await tx
                 .update(products)
                 .set({
-                    stock: sql`${products.stock} - ${item.quantity}`,
+                    stock: sql`${products.stock} - ${item.qty}`,
                 })
-                .where(eq(products.id, item.productId));
+                .where(eq(products.id, item.pid));
         }
 
         console.log(`✅ Order ${newOrder.id} created with ${items.length} items`);

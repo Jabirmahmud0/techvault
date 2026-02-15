@@ -73,21 +73,15 @@ export const checkoutController = {
                 customer_email: user.email,
                 metadata: {
                     userId: user.userId,
-                    shippingAddress: JSON.stringify(shippingAddress),
-                    // Store item details for webhook to create order items
+                    // Keep metadata under Stripe's 500-char-per-value limit
+                    shippingAddress: JSON.stringify(shippingAddress).slice(0, 500),
                     items: JSON.stringify(
-                        validItems.map((item: any) => {
-                            const product = productMap.get(item.productId)!;
-                            const imageUrls = product.images.map((img) => img.url);
-                            return {
-                                productId: item.productId,
-                                productName: product.name,
-                                productImage: imageUrls[0] || "",
-                                quantity: item.quantity,
-                                price: product.price,
-                            };
-                        })
-                    ),
+                        validItems.map((item: any) => ({
+                            pid: item.productId,
+                            qty: item.quantity,
+                            price: productMap.get(item.productId)!.price,
+                        }))
+                    ).slice(0, 500),
                 },
             });
 
@@ -97,7 +91,11 @@ export const checkoutController = {
                     sessionId: session.id,
                 },
             });
-        } catch (error) {
+        } catch (error: any) {
+            // Surface Stripe errors with useful messages instead of generic 500
+            if (error?.type?.startsWith?.("Stripe") || error?.statusCode) {
+                return next(ApiError.badRequest(error.message || "Payment processing failed"));
+            }
             next(error);
         }
     },
