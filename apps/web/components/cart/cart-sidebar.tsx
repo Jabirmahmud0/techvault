@@ -100,7 +100,7 @@ export function CartSidebar() {
                                                         {item.name}
                                                     </Link>
                                                     <p className="text-sm font-semibold text-primary mt-0.5">
-                                                        ${item.price.toFixed(2)}
+                                                        ${Number(item.price).toFixed(2)}
                                                     </p>
                                                 </div>
 
@@ -155,7 +155,7 @@ export function CartSidebar() {
                             <div className="border-t border-border p-4 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-muted-foreground">Subtotal</span>
-                                    <span className="text-lg font-bold">${totalPrice().toFixed(2)}</span>
+                                    <span className="text-lg font-bold">${Number(totalPrice()).toFixed(2)}</span>
                                 </div>
                                 <Button
                                     variant="glow"

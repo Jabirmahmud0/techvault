@@ -35,7 +35,7 @@ export const authController = {
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
             });
@@ -43,7 +43,7 @@ export const authController = {
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             });
@@ -74,7 +74,7 @@ export const authController = {
             res.cookie("refreshToken", tokens.refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
             });
@@ -82,7 +82,7 @@ export const authController = {
             res.cookie("accessToken", tokens.accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             });
@@ -107,8 +107,14 @@ export const authController = {
     },
 
     async logout(_req: Request, res: Response) {
-        res.clearCookie("refreshToken", { path: "/api/auth" });
-        res.clearCookie("accessToken", { path: "/" });
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" as const,
+        };
+
+        res.clearCookie("refreshToken", { ...cookieOptions, path: "/api/auth" });
+        res.clearCookie("accessToken", { ...cookieOptions, path: "/" });
         res.status(200).json({ success: true, message: "Logged out" });
     },
 
@@ -126,7 +132,7 @@ export const authController = {
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
             });
@@ -134,7 +140,7 @@ export const authController = {
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             });

@@ -84,7 +84,7 @@ export default function ProductDetailPage({
             id: product.id,
             productId: product.id,
             name: product.name,
-            price: product.price,
+            price: Number(product.price),
             image: safeImage(product.images[0]),
             stock: product.stock,
             slug: product.slug,
@@ -206,7 +206,7 @@ export default function ProductDetailPage({
                                         id: product.id,
                                         name: product.name,
                                         slug: product.slug,
-                                        price: product.price,
+                                        price: Number(product.price),
                                         image: safeImage(product.images[0]),
                                     })
                                 }

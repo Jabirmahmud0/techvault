@@ -94,7 +94,7 @@ export default function WishlistPage() {
                                         >
                                             {item.name}
                                         </Link>
-                                        <p className="text-lg font-bold text-primary">${item.price.toFixed(2)}</p>
+                                        <p className="text-lg font-bold text-primary">${Number(item.price).toFixed(2)}</p>
 
                                         <div className="flex gap-2">
                                             <Button
@@ -106,7 +106,7 @@ export default function WishlistPage() {
                                                         id: item.id,
                                                         productId: item.id,
                                                         name: item.name,
-                                                        price: item.price,
+                                                        price: Number(item.price),
                                                         image: item.image,
                                                         stock: 99,
                                                         slug: item.slug,

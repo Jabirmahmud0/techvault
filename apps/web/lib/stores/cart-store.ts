@@ -90,7 +90,7 @@ export const useCartStore = create<CartStore>()(
 
             totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
             totalPrice: () =>
-                get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+                get().items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0),
         }),
         {
             name: "techvault-cart",

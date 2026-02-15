@@ -8,6 +8,23 @@ const API_BASE_URL =
         ? (process.env.NEXT_PUBLIC_API_URL || "/api")
         : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api");
 
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (token: string | null) => void;
+    reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 /**
  * Typed fetch wrapper for API calls.
  * Automatically handles JSON serialization and error responses.
@@ -41,11 +58,45 @@ export async function apiClient<T>(
     const response = await fetch(url, config);
 
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-        // Token expired — clear auth state (skip for auth endpoints to prevent loops)
-        if (typeof window !== "undefined") {
-            useAuthStore.getState().logout();
+        if (isRefreshing) {
+            return new Promise<string | null>((resolve, reject) => {
+                failedQueue.push({ resolve, reject });
+            }).then(() => {
+                return apiClient<T>(endpoint, options);
+            });
         }
-        throw new Error("Session expired");
+
+        isRefreshing = true;
+
+        try {
+            const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+
+            if (refreshResponse.ok) {
+                const data = await refreshResponse.json();
+                const newAccessToken = data.data?.accessToken;
+
+                if (newAccessToken && typeof window !== "undefined") {
+                    useAuthStore.setState({ accessToken: newAccessToken });
+                }
+
+                processQueue(null, newAccessToken);
+                return apiClient<T>(endpoint, options);
+            } else {
+                throw new Error("Refresh failed");
+            }
+        } catch (error) {
+            processQueue(error as Error, null);
+            if (typeof window !== "undefined") {
+                useAuthStore.getState().logout();
+            }
+            throw new Error("Session expired");
+        } finally {
+            isRefreshing = false;
+        }
     }
 
     if (!response.ok) {
