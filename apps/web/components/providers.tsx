@@ -35,14 +35,26 @@ export function Providers({ children }: { children: ReactNode }) {
             })
     );
 
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
     return (
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-            <QueryClientProvider client={queryClient}>
-                <NextThemesProvider attribute="data-theme" defaultTheme="dark" enableSystem disableTransitionOnChange>
-                    {children}
-                    <Toaster />
-                </NextThemesProvider>
-            </QueryClientProvider>
-        </GoogleOAuthProvider>
+        <QueryClientProvider client={queryClient}>
+            <NextThemesProvider attribute="data-theme" defaultTheme="dark" enableSystem disableTransitionOnChange>
+                {clientId ? (
+                    <GoogleOAuthProvider clientId={clientId}>
+                        {children}
+                    </GoogleOAuthProvider>
+                ) : (
+                    <>
+                        {children}
+                        <div className="fixed bottom-4 right-4 z-50 rounded-md bg-destructive p-4 text-destructive-foreground shadow-lg">
+                            <p className="font-bold">Configuration Error</p>
+                            <p className="text-sm">Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID</p>
+                        </div>
+                    </>
+                )}
+                <Toaster />
+            </NextThemesProvider>
+        </QueryClientProvider>
     );
 }
