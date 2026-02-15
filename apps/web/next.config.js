@@ -21,13 +21,11 @@ const nextConfig = {
         ],
     },
     async rewrites() {
-        // Only proxy /api in development — in production the frontend
-        // calls the Railway API URL directly via NEXT_PUBLIC_API_URL
-        if (process.env.NODE_ENV === "production") return [];
+        const apiUrl = process.env.API_URL || "http://localhost:4000/api";
         return [
             {
                 source: "/api/:path*",
-                destination: "http://localhost:4000/api/:path*",
+                destination: `${apiUrl}/:path*`,
             },
         ];
     },
