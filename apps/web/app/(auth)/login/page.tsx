@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations";
@@ -28,9 +28,11 @@ import { toast } from "sonner"; // Assuming sonner is installed from package.jso
  */
 export default function LoginPage() {
     return (
-        <GuestGuard>
-            <LoginPageContent />
-        </GuestGuard>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+            <GuestGuard>
+                <LoginPageContent />
+            </GuestGuard>
+        </Suspense>
     );
 }
 
