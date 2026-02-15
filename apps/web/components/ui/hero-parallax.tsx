@@ -156,7 +156,7 @@ function SparkleParticle({ index, delay }: { index: number; delay: number }) {
 function AnimatedHeadline({ text, className }: { text: string; className?: string }) {
     const words = text.split(" ");
     return (
-        <span className={className}>
+        <span>
             {words.map((word, i) => (
                 <motion.span
                     key={i}
@@ -167,7 +167,7 @@ function AnimatedHeadline({ text, className }: { text: string; className?: strin
                         duration: 0.5,
                         ease: [0.25, 0.46, 0.45, 0.94],
                     }}
-                    className="inline-block mr-[0.3em]"
+                    className={`inline-block mr-[0.3em] ${className}`}
                 >
                     {word}
                 </motion.span>
