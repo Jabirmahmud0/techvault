@@ -21,7 +21,8 @@ export function AuthSync() {
     const user = useAuthStore((s) => s.user);
 
     useEffect(() => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+        // Use relative path to leverage Next.js proxy (Vercel -> Render)
+        const apiUrl = "/api";
 
         /**
          * Fetch with a single retry after a delay — handles Render cold starts

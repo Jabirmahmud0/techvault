@@ -5,7 +5,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 // On the server (SSR), call the backend directly since rewrites don't apply.
 const API_BASE_URL =
     typeof window !== "undefined"
-        ? (process.env.NEXT_PUBLIC_API_URL || "/api")
+        ? "/api" // Proxy through Next.js (local & prod)
         : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api");
 
 let isRefreshing = false;
