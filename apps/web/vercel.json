@@ -6,6 +6,6 @@
         "iad1"
     ],
     "env": {
-        "NEXT_PUBLIC_API_URL": "https://techvault-api.railway.app"
+        "NEXT_PUBLIC_API_URL": "https://techvault-19lu.onrender.com/api"
     }
 }

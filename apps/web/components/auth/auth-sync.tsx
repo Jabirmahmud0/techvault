@@ -8,6 +8,9 @@ import { api } from "@/lib/api";
  * Auth sync component that restores session from the backend on mount.
  * Calls /auth/me to verify the current access token and hydrate Zustand store.
  * Falls back to /auth/refresh if the access token is missing but refresh cookie exists.
+ *
+ * Resilient to transient errors (e.g. Render cold starts) — only logs out
+ * when the server explicitly rejects the refresh token.
  */
 export function AuthSync() {
     const setAuth = useAuthStore((s) => s.setAuth);
@@ -19,15 +22,44 @@ export function AuthSync() {
     useEffect(() => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+        /**
+         * Fetch with a single retry after a delay — handles Render cold starts
+         * which can take ~30s to wake up on the free tier.
+         */
+        async function fetchWithRetry(
+            url: string,
+            options: RequestInit,
+            retries = 1,
+            delay = 3000
+        ): Promise<Response> {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000);
+                const res = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(timeout);
+                return res;
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise((r) => setTimeout(r, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw err;
+            }
+        }
+
         async function syncAuth() {
             try {
                 if (accessToken) {
                     // Verify existing token
-                    const res = await api.get<{ data: any }>("/auth/me");
-                    if (res.data) {
-                        setAuth(res.data, accessToken);
-                        setHasHydrated(true);
-                        return;
+                    try {
+                        const res = await api.get<{ data: any }>("/auth/me");
+                        if (res.data) {
+                            setAuth(res.data, accessToken);
+                            setHasHydrated(true);
+                            return;
+                        }
+                    } catch {
+                        // Token might be expired — fall through to refresh
                     }
                 }
 
@@ -35,12 +67,13 @@ export function AuthSync() {
                 // localStorage even after the 15-min access token expires.
                 const hadPreviousSession = !!accessToken || !!user;
                 if (!hadPreviousSession) {
-                    logout();
+                    // No previous session at all — nothing to restore
+                    setHasHydrated(true);
                     return;
                 }
 
                 // Try refreshing the token via the httpOnly cookie
-                const refreshRes = await fetch(
+                const refreshRes = await fetchWithRetry(
                     `${apiUrl}/auth/refresh`,
                     {
                         method: "POST",
@@ -52,7 +85,7 @@ export function AuthSync() {
                     const data = await refreshRes.json();
                     if (data?.data?.accessToken) {
                         // We got a fresh token — now fetch user profile
-                        const meRes = await fetch(
+                        const meRes = await fetchWithRetry(
                             `${apiUrl}/auth/me`,
                             {
                                 headers: {
@@ -66,13 +99,16 @@ export function AuthSync() {
                             setAuth(meData.data, data.data.accessToken);
                         }
                     }
-                } else {
-                    // No valid session
+                } else if (refreshRes.status === 401 || refreshRes.status === 403) {
+                    // Server explicitly rejected the refresh token — session is truly invalid
                     logout();
                 }
+                // For other error codes (500, 502, 503, etc.) — don't logout.
+                // The user's localStorage session stays intact and will retry on next page load.
             } catch {
-                // Network error or invalid token
-                logout();
+                // Network error / timeout — likely Render cold start.
+                // Do NOT logout — keep existing session, retry on next navigation.
+                console.warn("[AuthSync] Network error during session restore — will retry on next load");
             } finally {
                 setHasHydrated(true);
             }

@@ -26,6 +26,31 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 };
 
 /**
+ * Attempt to refresh the access token with retry logic.
+ * Handles Render free-tier cold starts (~30s wake time).
+ */
+async function attemptRefresh(retries = 1, delay = 3000): Promise<Response> {
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        return res;
+    } catch (err) {
+        if (retries > 0) {
+            await new Promise((r) => setTimeout(r, delay));
+            return attemptRefresh(retries - 1, delay * 2);
+        }
+        throw err;
+    }
+}
+
+/**
  * Typed fetch wrapper for API calls.
  * Automatically handles JSON serialization and error responses.
  */
@@ -69,11 +94,7 @@ export async function apiClient<T>(
         isRefreshing = true;
 
         try {
-            const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-            });
+            const refreshResponse = await attemptRefresh();
 
             if (refreshResponse.ok) {
                 const data = await refreshResponse.json();
@@ -85,14 +106,22 @@ export async function apiClient<T>(
 
                 processQueue(null, newAccessToken);
                 return apiClient<T>(endpoint, options);
+            } else if (refreshResponse.status === 401 || refreshResponse.status === 403) {
+                // Server explicitly rejected — session truly invalid
+                throw new Error("Session expired");
             } else {
-                throw new Error("Refresh failed");
+                // Server error (500, 502, etc.) — don't logout, just fail this request
+                throw new Error(`Server error (${refreshResponse.status})`);
             }
         } catch (error) {
             processQueue(error as Error, null);
-            if (typeof window !== "undefined") {
+
+            // Only logout if the error indicates the session is truly invalid,
+            // not on transient network/server errors
+            if (typeof window !== "undefined" && (error as Error).message === "Session expired") {
                 useAuthStore.getState().logout();
             }
+
             throw new Error("Please log in to continue");
         } finally {
             isRefreshing = false;
@@ -150,5 +179,3 @@ export const api = {
     delete: <T>(endpoint: string, options?: RequestInit) =>
         apiClient<T>(endpoint, { ...options, method: "DELETE" }),
 };
-
-
