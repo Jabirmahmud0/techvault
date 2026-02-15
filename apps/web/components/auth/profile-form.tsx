@@ -18,7 +18,7 @@ import {
     FormDescription
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Save, Loader2, User, Key } from "lucide-react";
+import { Save, Loader2, User, Key, AlertTriangle, RefreshCw } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useEffect } from "react";
@@ -40,7 +40,7 @@ export function ProfileForm({
     const router = useRouter();
 
     // Fetch latest profile data
-    const { data: profile, isLoading } = useQuery({
+    const { data: profile, isLoading, isError, refetch } = useQuery({
         queryKey: ["profile"],
         queryFn: async () => {
             const res = await api.get<{ data: any }>("/users/profile");
@@ -106,6 +106,19 @@ export function ProfileForm({
         return (
             <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="text-center py-12">
+                <AlertTriangle className="h-12 w-12 text-yellow-500/50 mx-auto mb-3" />
+                <p className="font-medium mb-2">Failed to load profile</p>
+                <p className="text-sm text-muted-foreground mb-4">The server might be starting up.</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+                    <RefreshCw className="h-4 w-4" /> Try Again
+                </Button>
             </div>
         );
     }

@@ -16,12 +16,19 @@ export function Providers({ children }: { children: ReactNode }) {
             new QueryClient({
                 defaultOptions: {
                     queries: {
-                        staleTime: 60 * 1000, // 1 minute
+                        staleTime: 2 * 60 * 1000, // 2 minutes
                         refetchOnWindowFocus: false,
                         retry: (failureCount, error) => {
                             // Don't retry auth errors
                             if (error?.message === "Session expired") return false;
-                            return failureCount < 2;
+                            if (error?.message?.includes("log in")) return false;
+                            // Retry up to 3 times for network/server errors
+                            return failureCount < 3;
+                        },
+                        retryDelay: (attemptIndex) => {
+                            // Exponential backoff: 1s, 2s, 4s
+                            // Gives Render time to spin up from cold start
+                            return Math.min(1000 * 2 ** attemptIndex, 8000);
                         },
                     },
                 },

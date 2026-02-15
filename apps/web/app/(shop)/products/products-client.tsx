@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, Grid3X3, LayoutList, Loader2 } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, LayoutList, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
@@ -61,6 +61,8 @@ function ProductsContent({ initialData }: ProductsClientProps) {
     const {
         data,
         isLoading,
+        isError,
+        refetch,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -173,7 +175,18 @@ function ProductsContent({ initialData }: ProductsClientProps) {
                 </div>
 
                 {/* Product Grid */}
-                {isLoading ? (
+                {isError ? (
+                    <div className="text-center py-20">
+                        <AlertTriangle className="h-16 w-16 text-yellow-500/50 mx-auto mb-4" />
+                        <p className="text-lg font-medium mb-2">Failed to load products</p>
+                        <p className="text-muted-foreground mb-6 text-sm max-w-md mx-auto">
+                            The server might be starting up. This usually takes a few seconds.
+                        </p>
+                        <Button variant="outline" onClick={() => refetch()} className="gap-2">
+                            <RefreshCw className="h-4 w-4" /> Try Again
+                        </Button>
+                    </div>
+                ) : isLoading ? (
                     <ProductGridSkeleton count={8} />
                 ) : (
                     <>

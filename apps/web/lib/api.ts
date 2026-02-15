@@ -52,7 +52,8 @@ async function attemptRefresh(retries = 1, delay = 3000): Promise<Response> {
 
 /**
  * Typed fetch wrapper for API calls.
- * Automatically handles JSON serialization and error responses.
+ * Automatically handles JSON serialization, auth tokens, and error responses.
+ * Includes a 30s timeout to prevent indefinite hangs from Render cold starts.
  */
 export async function apiClient<T>(
     endpoint: string,
@@ -60,12 +61,17 @@ export async function apiClient<T>(
 ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    // Set up a 30s timeout via AbortController (handles Render cold starts)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const config: RequestInit = {
         headers: {
             "Content-Type": "application/json",
             ...options.headers,
         },
         credentials: "include",
+        signal: controller.signal,
         ...options,
     };
 
@@ -80,7 +86,17 @@ export async function apiClient<T>(
         }
     }
 
-    const response = await fetch(url, config);
+    let response: Response;
+    try {
+        response = await fetch(url, config);
+    } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err?.name === "AbortError") {
+            throw new Error("Request timed out — the server may be starting up. Please try again.");
+        }
+        throw new Error("Network error — please check your connection and try again.");
+    }
+    clearTimeout(timeoutId);
 
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         if (isRefreshing) {

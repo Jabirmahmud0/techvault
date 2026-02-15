@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Package, ChevronRight, ShoppingBag } from "lucide-react";
+import { Package, ChevronRight, ShoppingBag, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/lib/hooks/use-orders";
 import { cn } from "@/lib/utils";
 
 export default function OrdersPage() {
-    const { data: orders, isLoading } = useOrders();
+    const { data: orders, isLoading, isError, refetch } = useOrders();
 
     if (isLoading) {
         return (
@@ -26,6 +26,21 @@ export default function OrdersPage() {
                             <Skeleton className="h-16 w-full" />
                         </div>
                     ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center px-4">
+                <div className="text-center">
+                    <AlertTriangle className="h-16 w-16 text-yellow-500/50 mx-auto mb-4" />
+                    <h1 className="text-2xl font-bold mb-2">Failed to load orders</h1>
+                    <p className="text-muted-foreground mb-6">The server might be starting up. Please try again.</p>
+                    <Button variant="outline" onClick={() => refetch()} className="gap-2">
+                        <RefreshCw className="h-4 w-4" /> Try Again
+                    </Button>
                 </div>
             </div>
         );
