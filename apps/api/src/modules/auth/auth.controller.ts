@@ -38,7 +38,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
-            });
+            } as any);
 
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
@@ -46,7 +46,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
-            });
+            } as any);
 
             res.status(200).json({
                 success: true,
@@ -77,7 +77,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
-            });
+            } as any);
 
             res.cookie("accessToken", tokens.accessToken, {
                 httpOnly: true,
@@ -85,7 +85,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
-            });
+            } as any);
 
             res.status(200).json({
                 success: true,
@@ -113,8 +113,8 @@ export const authController = {
             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" as const,
         };
 
-        res.clearCookie("refreshToken", { ...cookieOptions, path: "/api/auth" });
-        res.clearCookie("accessToken", { ...cookieOptions, path: "/" });
+        res.clearCookie("refreshToken", { ...cookieOptions, path: "/api/auth" } as any);
+        res.clearCookie("accessToken", { ...cookieOptions, path: "/" } as any);
         res.status(200).json({ success: true, message: "Logged out" });
     },
 
@@ -135,7 +135,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 path: "/api/auth",
-            });
+            } as any);
 
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
@@ -143,7 +143,7 @@ export const authController = {
                 sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                 maxAge: 15 * 60 * 1000,
                 path: "/",
-            });
+            } as any);
 
             res.status(200).json({
                 success: true,
