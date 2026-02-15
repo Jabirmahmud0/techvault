@@ -22,7 +22,7 @@ export function GoogleLoginBtn() {
             router.push("/");
         } catch (error: any) {
             console.error(error);
-            toast.error(error.response?.data?.message || "Google login failed");
+            toast.error(error.message || "Google login failed");
         }
     };
 

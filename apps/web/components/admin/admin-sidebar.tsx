@@ -38,7 +38,7 @@ export function AdminSidebar() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
             await fetch(`${apiUrl}/auth/logout`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                credentials: "include",
             });
             logout();
             toast.success("Logged out successfully");
@@ -104,7 +104,7 @@ export function MobileAdminSidebar() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
             await fetch(`${apiUrl}/auth/logout`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                credentials: "include",
             });
             logout();
             setOpen(false);

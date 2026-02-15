@@ -93,7 +93,7 @@ export async function apiClient<T>(
             if (typeof window !== "undefined") {
                 useAuthStore.getState().logout();
             }
-            throw new Error("Session expired");
+            throw new Error("Please log in to continue");
         } finally {
             isRefreshing = false;
         }
@@ -101,7 +101,7 @@ export async function apiClient<T>(
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ error: "Network error" }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+        throw new Error(error.error || error.message || `HTTP ${response.status}`);
     }
 
     return response.json();

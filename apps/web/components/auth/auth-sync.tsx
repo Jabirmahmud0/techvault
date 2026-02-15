@@ -14,8 +14,11 @@ export function AuthSync() {
     const logout = useAuthStore((s) => s.logout);
     const setHasHydrated = useAuthStore((s) => s.setHasHydrated);
     const accessToken = useAuthStore((s) => s.accessToken);
+    const user = useAuthStore((s) => s.user);
 
     useEffect(() => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
         async function syncAuth() {
             try {
                 if (accessToken) {
@@ -28,9 +31,9 @@ export function AuthSync() {
                     }
                 }
 
-                // Only try refresh if we had a previous session (stale token in localStorage)
-                // For completely unauthenticated visitors, skip the refresh call
-                const hadPreviousSession = !!accessToken;
+                // Check if we had a previous session — user data persists in
+                // localStorage even after the 15-min access token expires.
+                const hadPreviousSession = !!accessToken || !!user;
                 if (!hadPreviousSession) {
                     logout();
                     return;
@@ -38,7 +41,7 @@ export function AuthSync() {
 
                 // Try refreshing the token via the httpOnly cookie
                 const refreshRes = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/refresh`,
+                    `${apiUrl}/auth/refresh`,
                     {
                         method: "POST",
                         credentials: "include",
@@ -50,11 +53,12 @@ export function AuthSync() {
                     if (data?.data?.accessToken) {
                         // We got a fresh token — now fetch user profile
                         const meRes = await fetch(
-                            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/me`,
+                            `${apiUrl}/auth/me`,
                             {
                                 headers: {
                                     Authorization: `Bearer ${data.data.accessToken}`,
                                 },
+                                credentials: "include",
                             }
                         );
                         if (meRes.ok) {

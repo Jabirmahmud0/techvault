@@ -58,6 +58,7 @@ function VerifyEmailForm() {
             const res = await fetch(`${apiUrl}/auth/verify-email`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ email, otp: values.otp }),
             });
 
@@ -84,6 +85,7 @@ function VerifyEmailForm() {
             await fetch(`${apiUrl}/auth/resend-verification`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ email }),
             });
             toast.success("New code sent! Check your inbox (or terminal).");
