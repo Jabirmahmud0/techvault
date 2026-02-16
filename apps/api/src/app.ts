@@ -30,6 +30,10 @@ import { sql } from "drizzle-orm";
 
 const app = express();
 
+// Trust the first proxy (Render load balancer)
+// This is required for rate limiting to work correctly behind a reverse proxy
+app.set("trust proxy", 1);
+
 app.get("/api/fix-db-settings", async (req, res) => {
     try {
         console.log("Attempting migration fix...");
