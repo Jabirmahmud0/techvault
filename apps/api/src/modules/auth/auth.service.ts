@@ -203,16 +203,26 @@ export const authService = {
      */
     async loginWithFirebase(idToken: string) {
         console.log("[Firebase Login] Starting loginWithFirebase...");
-        const { firebaseAdmin } = await import("../../config/firebase.js");
+        const { firebaseAdmin, isFirebaseInitialized } = await import("../../config/firebase.js");
+
+        if (!isFirebaseInitialized) {
+            console.error("[Firebase Login] Firebase not initialized on server (missing credentials)");
+            throw ApiError.internal("Firebase configuration is missing on the server. Please check backend logs/env vars.");
+        }
 
         let decodedToken;
         try {
             console.log("[Firebase Login] Verifying ID token...");
             decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
             console.log("[Firebase Login] Token verified for UID:", decodedToken.uid);
-        } catch (error) {
+        } catch (error: any) {
             console.error("[Firebase Login] Token verification failed:", error);
-            throw ApiError.unauthorized("Invalid Firebase token");
+            console.error("[Firebase Login] Error Code:", error.code);
+            console.error("[Firebase Login] Error Message:", error.message);
+            if (error.errorInfo) {
+                console.error("[Firebase Login] Error Info:", JSON.stringify(error.errorInfo, null, 2));
+            }
+            throw ApiError.unauthorized(`Invalid Firebase token: ${error.message}`);
         }
 
         const { email, uid, name, picture } = decodedToken;
