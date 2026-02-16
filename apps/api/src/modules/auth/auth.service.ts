@@ -248,7 +248,7 @@ export const authService = {
                         role: "USER"
                     })
                     .returning();
-                console.log("[Firebase Login] User created:", user.id);
+                console.log("[Firebase Login] User created:", user?.id);
             } catch (dbError) {
                 console.error("[Firebase Login] Database insert failed:", dbError);
                 throw dbError;
@@ -267,7 +267,7 @@ export const authService = {
                     })
                     .where(eq(users.id, user.id))
                     .returning();
-                console.log("[Firebase Login] User linked:", user.id);
+                console.log("[Firebase Login] User linked:", user?.id);
             } catch (dbError) {
                 console.error("[Firebase Login] Database update failed:", dbError);
                 throw dbError;
