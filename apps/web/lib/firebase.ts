@@ -11,9 +11,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app: any;
-let auth: any;
-let googleProvider: any;
+let app: any = null;
+let auth: any = null;
+let googleProvider: any = null;
 
 if (typeof window !== "undefined" || (firebaseConfig.apiKey && firebaseConfig.projectId)) {
     try {
@@ -22,13 +22,10 @@ if (typeof window !== "undefined" || (firebaseConfig.apiKey && firebaseConfig.pr
         googleProvider = new GoogleAuthProvider();
     } catch (error) {
         console.error("Firebase initialization failed:", error);
+        // Keep variables null so imports don't crash with "undefined"
     }
 } else {
     console.warn("Firebase env vars missing during build/SSR. Skipping initialization.");
-    // Mock for build time to prevent crashes
-    app = null;
-    auth = { currentUser: null }; // Minimal mock to satisfy basic usage
-    googleProvider = null;
 }
 
 export { app, auth, googleProvider };

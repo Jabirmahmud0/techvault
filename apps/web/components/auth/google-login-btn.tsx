@@ -12,6 +12,11 @@ export function GoogleLoginBtn() {
     const router = useRouter();
 
     const handleGoogleLogin = async () => {
+        if (!auth || !googleProvider) {
+            toast.error("Firebase configuration missing. Please check your environment variables.");
+            return;
+        }
+
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const idToken = await result.user.getIdToken();
