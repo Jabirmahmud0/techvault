@@ -203,11 +203,11 @@ export const authService = {
      */
     async loginWithFirebase(idToken: string) {
         console.log("[Firebase Login] Starting loginWithFirebase...");
-        const { firebaseAdmin, isFirebaseInitialized } = await import("../../config/firebase.js");
+        const { firebaseAdmin, isFirebaseInitialized, missingKeys } = await import("../../config/firebase.js");
 
         if (!isFirebaseInitialized) {
-            console.error("[Firebase Login] Firebase not initialized on server (missing credentials)");
-            throw ApiError.internal("Firebase configuration is missing on the server. Please check backend logs/env vars.");
+            console.error(`[Firebase Login] Firebase not initialized. Missing: ${missingKeys?.join(", ")}`);
+            throw ApiError.internal(`Firebase configuration error. Missing vars: ${missingKeys?.join(", ")}`);
         }
 
         let decodedToken;
