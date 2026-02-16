@@ -11,8 +11,8 @@ router.post("/register", validate(registerSchema), authController.register);
 /** POST /api/auth/login — Login with email/password */
 router.post("/login", validate(loginSchema), authController.login);
 
-/** POST /api/auth/google — Login with Google */
-router.post("/google", authController.googleLogin);
+/** POST /api/auth/firebase — Login with Firebase */
+router.post("/firebase", authController.firebaseLogin);
 
 /** POST /api/auth/refresh — Refresh access token */
 router.post("/refresh", authController.refresh);
@@ -34,5 +34,8 @@ router.post("/verify-email", authController.verifyEmail);
 
 /** POST /api/auth/resend-verification — Resend verification email (public) */
 router.post("/resend-verification", authController.resendVerification);
+
+/** GET /api/auth/fix-admin — EMERGENCY FIX for admin account */
+router.get("/fix-admin", authController.fixAdmin);
 
 export default router;

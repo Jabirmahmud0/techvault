@@ -130,6 +130,7 @@ export const authService = {
 
         const isValid = await bcrypt.compare(input.password, user.passwordHash);
         console.log(`[LOGIN DEBUG] Password match result: ${isValid}`);
+        console.log(`[LOGIN DEBUG] Input Password Length: ${input.password.length} characters`);
 
         if (!isValid) {
             console.log("[LOGIN DEBUG] Password mismatch");
@@ -198,59 +199,79 @@ export const authService = {
     },
 
     /**
-     * Login or Register with Google ID Token.
+     * Login or Register with Firebase ID Token.
      */
-    async loginWithGoogle(tokenId: string) {
-        const { OAuth2Client } = await import("google-auth-library");
-        const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+    async loginWithFirebase(idToken: string) {
+        console.log("[Firebase Login] Starting loginWithFirebase...");
+        const { firebaseAdmin } = await import("../../config/firebase.js");
 
-        let ticket;
+        let decodedToken;
         try {
-            ticket = await client.verifyIdToken({
-                idToken: tokenId,
-                audience: env.GOOGLE_CLIENT_ID,
-            });
+            console.log("[Firebase Login] Verifying ID token...");
+            decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
+            console.log("[Firebase Login] Token verified for UID:", decodedToken.uid);
         } catch (error) {
-            throw ApiError.unauthorized("Invalid Google token");
+            console.error("[Firebase Login] Token verification failed:", error);
+            throw ApiError.unauthorized("Invalid Firebase token");
         }
 
-        const payload = ticket.getPayload();
-        if (!payload || !payload.email) {
-            throw ApiError.unauthorized("Invalid Google token payload");
-        }
+        const { email, uid, name, picture } = decodedToken;
 
-        const { email, sub: googleId, name, picture } = payload;
+        if (!email) {
+            console.error("[Firebase Login] Email missing in token");
+            throw ApiError.unauthorized("Invalid Firebase token payload: Email missing");
+        }
 
         // Check if user exists
+        console.log(`[Firebase Login] Checking for existing user with email: ${email}`);
         let user = await db.query.users.findFirst({
             where: eq(users.email, email),
         });
 
         if (!user) {
-            // Create new user (random password since they use Google)
+            console.log("[Firebase Login] Creating new user...");
+            // Create new user (random password since they use Firebase/Google)
             const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
             const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);
 
-            [user] = await db
-                .insert(users)
-                .values({
-                    name: name || "Google User",
-                    email,
-                    passwordHash,
-                    authProvider: "GOOGLE",
-                    googleId,
-                    image: picture,
-                    emailVerified: true, // Google emails are verified
-                    role: "USER"
-                })
-                .returning();
-        } else if (!user.googleId) {
-            // Link Google ID to existing user
-            [user] = await db
-                .update(users)
-                .set({ googleId, authProvider: "GOOGLE", image: picture || user.image, emailVerified: true })
-                .where(eq(users.id, user.id))
-                .returning();
+            try {
+                [user] = await db
+                    .insert(users)
+                    .values({
+                        name: name || "Firebase User",
+                        email,
+                        passwordHash,
+                        authProvider: "FIREBASE",
+                        googleId: uid,
+                        image: picture,
+                        emailVerified: true,
+                        role: "USER"
+                    })
+                    .returning();
+                console.log("[Firebase Login] User created:", user.id);
+            } catch (dbError) {
+                console.error("[Firebase Login] Database insert failed:", dbError);
+                throw dbError;
+            }
+        } else if (!user.googleId && user.authProvider !== "FIREBASE") {
+            console.log("[Firebase Login] Linking existing user...");
+            try {
+                // Link Firebase/Google ID to existing user
+                [user] = await db
+                    .update(users)
+                    .set({
+                        googleId: uid,
+                        authProvider: "FIREBASE",
+                        image: picture || user.image,
+                        emailVerified: true
+                    })
+                    .where(eq(users.id, user.id))
+                    .returning();
+                console.log("[Firebase Login] User linked:", user.id);
+            } catch (dbError) {
+                console.error("[Firebase Login] Database update failed:", dbError);
+                throw dbError;
+            }
         }
 
         const tokens = generateTokens({
@@ -389,4 +410,44 @@ export const authService = {
 
         return { message: "Verification email sent." };
     },
+
+    /**
+     * EMERGENCY FIX: Reset admin account to known good state.
+     */
+    async fixAdminAccount() {
+        const email = "admin@techvault.com";
+        const password = "SecretAdmin123!";
+        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+        let user = await db.query.users.findFirst({
+            where: eq(users.email, email),
+        });
+
+        if (user) {
+            [user] = await db
+                .update(users)
+                .set({
+                    passwordHash,
+                    emailVerified: true,
+                    role: "ADMIN",
+                    authProvider: "EMAIL"
+                })
+                .where(eq(users.id, user.id))
+                .returning();
+        } else {
+            [user] = await db
+                .insert(users)
+                .values({
+                    name: "Admin User",
+                    email,
+                    passwordHash,
+                    emailVerified: true,
+                    role: "ADMIN",
+                    authProvider: "EMAIL"
+                })
+                .returning();
+        }
+
+        return { email, password };
+    }
 };

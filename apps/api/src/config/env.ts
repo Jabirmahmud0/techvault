@@ -28,9 +28,6 @@ const envSchema = z.object({
     // CORS
     FRONTEND_URL: z.string().url().default("http://localhost:3000"),
 
-    // Google OAuth
-    GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
-    GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
 
     // Redis (Upstash)
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
@@ -43,7 +40,12 @@ const envSchema = z.object({
     // Email (Resend or SMTP)
     RESEND_API_KEY: z.string().optional(),
 
-    // SMTP
+    // Firebase
+    FIREBASE_PROJECT_ID: z.string().optional(),
+    FIREBASE_CLIENT_EMAIL: z.string().optional(),
+    FIREBASE_PRIVATE_KEY: z.string().optional(),
+
+    // SMTP (Gmail)
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().optional().default(587),
     SMTP_USER: z.string().optional(),

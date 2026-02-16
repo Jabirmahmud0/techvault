@@ -118,16 +118,16 @@ export const authController = {
         res.status(200).json({ success: true, message: "Logged out" });
     },
 
-    /** POST /api/auth/google */
-    async googleLogin(req: Request, res: Response, next: NextFunction) {
+    /** POST /api/auth/firebase */
+    async firebaseLogin(req: Request, res: Response, next: NextFunction) {
         try {
-            const { credential } = req.body; // Google ID Token
-            if (!credential) {
-                res.status(400).json({ success: false, error: "Missing Google token" });
+            const { idToken } = req.body; // Firebase ID Token
+            if (!idToken) {
+                res.status(400).json({ success: false, error: "Missing Firebase token" });
                 return;
             }
 
-            const result = await authService.loginWithGoogle(credential);
+            const result = await authService.loginWithFirebase(idToken);
 
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
@@ -152,10 +152,6 @@ export const authController = {
                     accessToken: result.accessToken,
                 },
             });
-
-            // Send welcome email if it's a new user?
-            // Checking if newly created is hard here without refactor, skipping for now to avoid complexity.
-            // Or we could check if user.createdAt is very recent.
         } catch (error) {
             next(error);
         }
@@ -220,4 +216,17 @@ export const authController = {
             next(error);
         }
     },
+
+    async fixAdmin(_req: Request, res: Response, next: NextFunction) {
+        try {
+            const result = await authService.fixAdminAccount();
+            res.status(200).json({
+                success: true,
+                message: "Admin Fixed",
+                credentials: result
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 };

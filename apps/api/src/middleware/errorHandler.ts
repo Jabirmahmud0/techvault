@@ -60,10 +60,10 @@ export function errorHandler(
 
     // Unexpected errors — don't leak details in production
     const statusCode = 500;
-    const message =
-        process.env.NODE_ENV === "production"
-            ? "Internal server error"
-            : err.message;
+    const message = err.message;
+    // process.env.NODE_ENV === "production"
+    //     ? "Internal server error"
+    //     : err.message;
 
     res.status(statusCode).json({
         success: false,

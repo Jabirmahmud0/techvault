@@ -11,7 +11,9 @@ export function GuestGuard({ children }: { children: React.ReactNode }) {
     const callbackUrl = searchParams.get("callbackUrl") || "/";
 
     useEffect(() => {
+        console.log("[GuestGuard] Check:", { userCheckComplete, isAuthenticated, callbackUrl });
         if (userCheckComplete && isAuthenticated) {
+            console.log("[GuestGuard] Redirecting to:", callbackUrl);
             router.replace(callbackUrl);
         }
     }, [isAuthenticated, userCheckComplete, router, callbackUrl]);

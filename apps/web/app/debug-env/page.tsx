@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 export default function DebugEnvPage() {
     const apiUrl = process.env.API_URL;
     const nextPublicApiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     return (
         <div className="p-8 font-mono space-y-4">
@@ -25,10 +24,6 @@ export default function DebugEnvPage() {
                     <div>NEXT_PUBLIC_API_URL:</div>
                     <div className="font-bold text-primary break-all">
                         {nextPublicApiUrl || "❌ MISSING"}
-                    </div>
-                    <div>GOOGLE_CLIENT_ID:</div>
-                    <div className="font-bold text-primary break-all">
-                        {googleClientId ? "✅ PRESENT" : "❌ MISSING"}
                     </div>
                 </div>
             </div>

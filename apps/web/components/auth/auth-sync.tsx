@@ -110,11 +110,12 @@ export function AuthSync() {
                 }
                 // For other error codes (500, 502, 503, etc.) — don't logout.
                 // The user's localStorage session stays intact and will retry on next page load.
-            } catch {
+            } catch (error) {
                 // Network error / timeout — likely Render cold start.
                 // Do NOT logout — keep existing session, retry on next navigation.
-                console.warn("[AuthSync] Network error during session restore — will retry on next load");
+                console.warn("[AuthSync] Network error during session restore — will retry on next load", error);
             } finally {
+                console.log("[AuthSync] Setting userCheckComplete to true");
                 setUserCheckComplete(true);
             }
         }

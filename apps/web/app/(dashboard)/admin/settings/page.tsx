@@ -71,6 +71,7 @@ export default function AdminSettingsPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "low-stock"] });
             toast.success("Settings saved successfully", {
                 description: "Store configuration has been updated."
             });

@@ -3,6 +3,7 @@ import { sql, desc, eq, sum, count, gte } from "drizzle-orm";
 import { db } from "../../config/database.js";
 import { orders, users, products } from "@repo/db/schema";
 import { startOfMonth, subMonths } from "date-fns";
+import { settingsService } from "../settings/settings.service.js";
 
 export const adminController = {
     async getStats(req: Request, res: Response, next: NextFunction) {
@@ -171,9 +172,12 @@ export const adminController = {
 
     async getLowStock(req: Request, res: Response, next: NextFunction) {
         try {
+            const settings = await settingsService.getSettings();
+            const threshold = settings?.lowStockThreshold || 10;
+
             const lowStockProducts = await db.query.products.findMany({
                 where: (products, { lt, and, eq }) => and(
-                    lt(products.stock, 10),
+                    lt(products.stock, threshold),
                     eq(products.isArchived, false)
                 ),
                 orderBy: (products, { asc }) => [asc(products.stock)],

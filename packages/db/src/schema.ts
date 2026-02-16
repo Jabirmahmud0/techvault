@@ -34,7 +34,7 @@ export const users = pgTable("users", {
     passwordHash: text("password_hash"),
     image: text("image"),
     role: userRoleEnum("role").default("USER").notNull(),
-    authProvider: text("auth_provider", { enum: ["EMAIL", "GOOGLE"] }).default("EMAIL"),
+    authProvider: text("auth_provider", { enum: ["EMAIL", "GOOGLE", "FIREBASE"] }).default("EMAIL"),
     googleId: varchar("google_id", { length: 255 }).unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     otpCode: varchar("otp_code", { length: 6 }),
