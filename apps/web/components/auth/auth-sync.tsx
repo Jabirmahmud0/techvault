@@ -51,31 +51,10 @@ export function AuthSync() {
 
         async function syncAuth() {
             try {
-                if (accessToken) {
-                    // Verify existing token
-                    try {
-                        const res = await api.get<{ data: any }>("/auth/me");
-                        if (res.data) {
-                            setAuth(res.data, accessToken);
-                            setHasHydrated(true);
-                            setUserCheckComplete(true);
-                            return;
-                        }
-                    } catch {
-                        // Token might be expired — fall through to refresh
-                    }
-                }
+                // ALWAYS try refreshing the token via the httpOnly cookie on mount.
+                // This ensures that if the cookie is missing (but localStorage has data),
+                // we correctly fail and logout instead of getting into a redirect loop.
 
-                // Check if we had a previous session — user data persists in
-                // localStorage even after the 15-min access token expires.
-                const hadPreviousSession = !!accessToken || !!user;
-                if (!hadPreviousSession) {
-                    // No previous session at all — nothing to restore
-                    // No previous session at all — nothing to restore
-                    setHasHydrated(true); // store is loaded
-                    setUserCheckComplete(true); // verification done (no user)
-                    return;
-                }
 
                 // Try refreshing the token via the httpOnly cookie
                 const refreshRes = await fetchWithRetry(
