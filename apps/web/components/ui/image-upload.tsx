@@ -31,11 +31,7 @@ export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
         formData.append("image", file);
 
         try {
-            const res = await api.post<{ data: { url: string } }>("/upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const res = await api.post<{ data: { url: string } }>("/upload", formData);
             onChange(res.data.url);
         } catch (error) {
             console.error("Upload failed", error);
