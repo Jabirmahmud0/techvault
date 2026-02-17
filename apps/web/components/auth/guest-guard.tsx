@@ -27,5 +27,14 @@ export function GuestGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // Show loading state while checking auth status
+    if (!userCheckComplete) {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
     return <>{children}</>;
 }

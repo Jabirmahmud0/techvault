@@ -34,16 +34,16 @@ export const authController = {
 
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 7 * 24 * 60 * 60 * 1000,
-                path: "/api/auth",
+                path: "/", // Changed from "/api/auth" to "/" for accessibility across routes
             } as any);
 
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             } as any);
@@ -73,16 +73,16 @@ export const authController = {
 
             res.cookie("refreshToken", tokens.refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 7 * 24 * 60 * 60 * 1000,
-                path: "/api/auth",
+                path: "/", // Changed from "/api/auth" to "/" for accessibility across routes
             } as any);
 
             res.cookie("accessToken", tokens.accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             } as any);
@@ -109,11 +109,11 @@ export const authController = {
     async logout(_req: Request, res: Response) {
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" as const,
+            secure: true, // Always true in production with proxy
+            sameSite: "lax" as const, // Changed from conditional to "lax" for proxy
         };
 
-        res.clearCookie("refreshToken", { ...cookieOptions, path: "/api/auth" } as any);
+        res.clearCookie("refreshToken", { ...cookieOptions, path: "/" } as any); // Changed path to "/"
         res.clearCookie("accessToken", { ...cookieOptions, path: "/" } as any);
         res.status(200).json({ success: true, message: "Logged out" });
     },
@@ -131,16 +131,16 @@ export const authController = {
 
             res.cookie("refreshToken", result.refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 7 * 24 * 60 * 60 * 1000,
-                path: "/api/auth",
+                path: "/", // Changed from "/api/auth" to "/" for accessibility across routes
             } as any);
 
             res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: true, // Always true in production with proxy
+                sameSite: "lax", // Changed from conditional "none" to "lax" for proxy
                 maxAge: 15 * 60 * 1000,
                 path: "/",
             } as any);
