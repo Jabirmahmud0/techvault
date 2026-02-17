@@ -19,12 +19,12 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Check for auth token in cookies or Authorization header
-    const accessToken =
-        request.cookies.get("accessToken")?.value ||
-        request.headers.get("Authorization")?.replace("Bearer ", "");
+    // Check for auth tokens in cookies
+    const accessToken = request.cookies.get("accessToken")?.value;
+    const refreshToken = request.cookies.get("refreshToken")?.value;
 
-    if (!accessToken) {
+    // Allow access if either access token exists OR refresh token exists (so frontend can refresh)
+    if (!accessToken && !refreshToken) {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
