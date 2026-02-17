@@ -12,6 +12,7 @@ export function GoogleLoginBtn() {
     const router = useRouter();
 
     const handleGoogleLogin = async () => {
+        console.log("GOOGLE LOGIN CLICKED");
         if (!auth || !googleProvider) {
             toast.error("Firebase configuration missing. Please check your environment variables.");
             return;

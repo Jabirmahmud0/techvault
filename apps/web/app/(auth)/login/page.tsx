@@ -54,6 +54,7 @@ function LoginPageContent() {
     });
 
     const onSubmit = async (values: LoginInput) => {
+        console.log("LOGIN FORM SUBMITTED", values);
         setLoading(true);
         setError("");
 
