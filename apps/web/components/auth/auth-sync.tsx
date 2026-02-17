@@ -50,6 +50,13 @@ export function AuthSync() {
         }
 
         async function syncAuth() {
+            // Check if user is already logged out before attempting to sync
+            // If user is null in the store, don't attempt to restore session
+            if (!user && !accessToken) {
+                setUserCheckComplete(true);
+                return;
+            }
+
             try {
                 // ALWAYS try refreshing the token via the httpOnly cookie on mount.
                 // This ensures that if the cookie is missing (but localStorage has data),
