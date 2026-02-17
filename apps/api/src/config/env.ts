@@ -41,9 +41,9 @@ const envSchema = z.object({
     RESEND_API_KEY: z.string().optional(),
 
     // Firebase
-    FIREBASE_PROJECT_ID: z.string().optional(),
-    FIREBASE_CLIENT_EMAIL: z.string().optional(),
-    FIREBASE_PRIVATE_KEY: z.string().optional(),
+    FIREBASE_PROJECT_ID: z.string().min(1).optional(),
+    FIREBASE_CLIENT_EMAIL: z.string().min(1).optional(),
+    FIREBASE_PRIVATE_KEY: z.string().min(1).optional(),
 
     // SMTP (Gmail)
     SMTP_HOST: z.string().optional(),
