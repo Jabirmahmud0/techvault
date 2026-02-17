@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "./config/database.js";
+import "./config/firebase.js"; // Force Firebase initialization at startup
 import app from "./app.js";
 import { env } from "./config/env.js";
 
