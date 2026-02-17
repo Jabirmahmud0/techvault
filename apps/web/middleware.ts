@@ -10,9 +10,12 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const isProtectedRoute =
+
         pathname.startsWith("/admin") ||
         pathname.startsWith("/seller") ||
         pathname.startsWith("/orders") ||
+        pathname.startsWith("/checkout") ||
+        pathname.startsWith("/wishlist") ||
         pathname.startsWith("/profile");
 
     if (!isProtectedRoute) {
