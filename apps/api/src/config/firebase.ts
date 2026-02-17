@@ -1,5 +1,4 @@
 import admin from "firebase-admin";
-import { env } from "./env.js";
 
 // Diagnostic logging to check raw environment variables
 console.log("RAW ENV:", {
@@ -13,16 +12,20 @@ let missingKeys: string[] = [];
 
 if (!admin.apps.length) {
     try {
+        const projectId = process.env.FIREBASE_PROJECT_ID;
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+        const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
+
         // Check for undefined, null, or empty string values
-        if (!env.FIREBASE_PROJECT_ID || env.FIREBASE_PROJECT_ID.trim() === '') missingKeys.push("FIREBASE_PROJECT_ID");
-        if (!env.FIREBASE_CLIENT_EMAIL || env.FIREBASE_CLIENT_EMAIL.trim() === '') missingKeys.push("FIREBASE_CLIENT_EMAIL");
-        if (!env.FIREBASE_PRIVATE_KEY || env.FIREBASE_PRIVATE_KEY.trim() === '') missingKeys.push("FIREBASE_PRIVATE_KEY");
+        if (!projectId || projectId.trim() === '') missingKeys.push("FIREBASE_PROJECT_ID");
+        if (!clientEmail || clientEmail.trim() === '') missingKeys.push("FIREBASE_CLIENT_EMAIL");
+        if (!privateKeyRaw || privateKeyRaw.trim() === '') missingKeys.push("FIREBASE_PRIVATE_KEY");
 
         if (missingKeys.length > 0) {
             console.warn(`⚠️ Firebase Admin credentials missing: ${missingKeys.join(", ")}. Firebase auth will fail.`);
         } else {
             // Handle both escaped and unescaped newlines in private key
-            let privateKey = env.FIREBASE_PRIVATE_KEY!;
+            let privateKey = privateKeyRaw!;
             if (!privateKey.includes('\n') && privateKey.includes('\\n')) {
                 privateKey = privateKey.replace(/\\n/g, '\n');
             } else if (!privateKey.includes('\n') && privateKey.includes('-----BEGIN')) {
@@ -35,8 +38,8 @@ if (!admin.apps.length) {
 
             admin.initializeApp({
                 credential: admin.credential.cert({
-                    projectId: env.FIREBASE_PROJECT_ID,
-                    clientEmail: env.FIREBASE_CLIENT_EMAIL,
+                    projectId: projectId,
+                    clientEmail: clientEmail,
                     privateKey: privateKey,
                 }),
             });
@@ -46,13 +49,13 @@ if (!admin.apps.length) {
     } catch (error) {
         console.error("❌ Firebase Admin initialization failed:", error);
         console.error("Error details:", {
-            hasProjectId: !!env.FIREBASE_PROJECT_ID,
-            hasClientEmail: !!env.FIREBASE_CLIENT_EMAIL,
-            hasPrivateKey: !!env.FIREBASE_PRIVATE_KEY,
-            privateKeyLength: env.FIREBASE_PRIVATE_KEY?.length || 0,
-            projectIdValue: env.FIREBASE_PROJECT_ID,
-            clientEmailValue: env.FIREBASE_CLIENT_EMAIL,
-            privateKeyValue: env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
+            hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+            hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+            hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+            privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+            projectIdValue: process.env.FIREBASE_PROJECT_ID,
+            clientEmailValue: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKeyValue: process.env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
         });
     }
 } else {
