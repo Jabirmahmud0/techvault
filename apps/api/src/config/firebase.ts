@@ -1,14 +1,22 @@
 import admin from "firebase-admin";
 import { env } from "./env.js";
 
+// Diagnostic logging to check raw environment variables
+console.log("RAW ENV:", {
+  project: process.env.FIREBASE_PROJECT_ID,
+  email: process.env.FIREBASE_CLIENT_EMAIL,
+  key: !!process.env.FIREBASE_PRIVATE_KEY
+});
+
 let isFirebaseInitialized = false;
 let missingKeys: string[] = [];
 
 if (!admin.apps.length) {
     try {
-        if (!env.FIREBASE_PROJECT_ID) missingKeys.push("FIREBASE_PROJECT_ID");
-        if (!env.FIREBASE_CLIENT_EMAIL) missingKeys.push("FIREBASE_CLIENT_EMAIL");
-        if (!env.FIREBASE_PRIVATE_KEY) missingKeys.push("FIREBASE_PRIVATE_KEY");
+        // Check for undefined, null, or empty string values
+        if (!env.FIREBASE_PROJECT_ID || env.FIREBASE_PROJECT_ID.trim() === '') missingKeys.push("FIREBASE_PROJECT_ID");
+        if (!env.FIREBASE_CLIENT_EMAIL || env.FIREBASE_CLIENT_EMAIL.trim() === '') missingKeys.push("FIREBASE_CLIENT_EMAIL");
+        if (!env.FIREBASE_PRIVATE_KEY || env.FIREBASE_PRIVATE_KEY.trim() === '') missingKeys.push("FIREBASE_PRIVATE_KEY");
 
         if (missingKeys.length > 0) {
             console.warn(`⚠️ Firebase Admin credentials missing: ${missingKeys.join(", ")}. Firebase auth will fail.`);
@@ -42,6 +50,9 @@ if (!admin.apps.length) {
             hasClientEmail: !!env.FIREBASE_CLIENT_EMAIL,
             hasPrivateKey: !!env.FIREBASE_PRIVATE_KEY,
             privateKeyLength: env.FIREBASE_PRIVATE_KEY?.length || 0,
+            projectIdValue: env.FIREBASE_PROJECT_ID,
+            clientEmailValue: env.FIREBASE_CLIENT_EMAIL,
+            privateKeyValue: env.FIREBASE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
         });
     }
 } else {
