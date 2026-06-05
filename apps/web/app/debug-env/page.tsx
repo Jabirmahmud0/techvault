@@ -3,11 +3,11 @@ import ClientCookiesDebugger from "./client-cookies";
 
 export const dynamic = "force-dynamic";
 
-export default function DebugEnvPage() {
+export default async function DebugEnvPage() {
     const apiUrl = process.env.API_URL;
     const nextPublicApiUrl = process.env.NEXT_PUBLIC_API_URL;
     
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 
     return (
