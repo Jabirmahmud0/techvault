@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { AccountSidebar, MobileAccountSidebar } from "@/components/account/account-sidebar";
@@ -13,12 +13,13 @@ export default function AccountLayout({
 }) {
     const { isAuthenticated, hasHydrated } = useAuthStore();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (hasHydrated && !isAuthenticated) {
-            router.push("/login?redirect=/profile");
+            router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
         }
-    }, [hasHydrated, isAuthenticated, router]);
+    }, [hasHydrated, isAuthenticated, pathname, router]);
 
     if (!hasHydrated) {
         return null;

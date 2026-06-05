@@ -23,6 +23,14 @@ import { GoogleLoginBtn } from "@/components/auth/google-login-btn";
 import { GuestGuard } from "@/components/auth/guest-guard";
 import { toast } from "sonner"; // Assuming sonner is installed from package.json
 
+function getSafeCallbackUrl(callbackUrl: string | null) {
+    if (!callbackUrl || !callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) {
+        return "/";
+    }
+
+    return callbackUrl;
+}
+
 /**
  * Login page with glassmorphism card design and Zod-validated form.
  */
@@ -42,7 +50,7 @@ function LoginPageContent() {
     const [error, setError] = useState("");
     const router = useRouter();
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
     const setAuth = useAuthStore((s) => s.setAuth);
 
     const form = useForm<LoginInput>({
@@ -59,8 +67,7 @@ function LoginPageContent() {
         setError("");
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-            const res = await fetch(`${apiUrl}/auth/login`, {
+            const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(values),
@@ -78,7 +85,7 @@ function LoginPageContent() {
                 router.push(callbackUrl);
                 router.refresh();
             }
-        } catch (err: any) {
+        } catch {
             setError("Something went wrong");
         } finally {
             setLoading(false);
