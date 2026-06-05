@@ -24,11 +24,14 @@ const nextConfig = {
         const apiUrl = process.env.API_URL || "http://localhost:4000/api";
         return [
             {
-                source: "/api/:path*",
+                // Auth routes are handled by the app/api/auth/[...path]/route.ts Route Handler
+                // which properly forwards Set-Cookie headers. Skip them here.
+                source: "/api/:path((?!auth/).*)",
                 destination: `${apiUrl}/:path*`,
             },
         ];
     },
+
     async headers() {
         return [
             {
